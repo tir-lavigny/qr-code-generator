@@ -10,10 +10,12 @@
         "lint": "eslint --ext .ts,.tsx,.vue src",
         "lint:fix": "eslint --ext .ts,.tsx,.vue src --fix",
         "test": "vitest",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "tsc": "vue-tsc --noEmit -p tsconfig.json"
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.2.2",
+        "@vueuse/core": "^14.2.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "eslint-config-prettier": "^10.1.8",
