@@ -1,10 +1,62 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
     computeCardDimensions,
     totalPages,
     DEFAULT_GENERATE_OPTIONS,
 } from './useQrPdf'
 import type { GridConfig } from '@/types/csv'
+
+// ---------------------------------------------------------------------------
+// Mocks for jsPDF and qrcode (must be hoisted before dynamic imports)
+// ---------------------------------------------------------------------------
+
+const {
+    mockSave,
+    mockAddImage,
+    mockAddPage,
+    mockText,
+    mockRect,
+    mockSetFontSize,
+    mockSetFont,
+    mockSetDrawColor,
+} = vi.hoisted(() => ({
+    mockSave: vi.fn(),
+    mockAddImage: vi.fn(),
+    mockAddPage: vi.fn(),
+    mockText: vi.fn(),
+    mockRect: vi.fn(),
+    mockSetFontSize: vi.fn(),
+    mockSetFont: vi.fn(),
+    mockSetDrawColor: vi.fn(),
+}))
+
+vi.mock('jspdf', () => {
+    const instance = {
+        addImage: mockAddImage,
+        addPage: mockAddPage,
+        text: mockText,
+        rect: mockRect,
+        setFontSize: mockSetFontSize,
+        setFont: mockSetFont,
+        setDrawColor: mockSetDrawColor,
+        save: mockSave,
+    }
+    return {
+        jsPDF: vi.fn().mockImplementation(function () {
+            return instance
+        }),
+    }
+})
+
+vi.mock('qrcode', () => ({
+    default: {
+        toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,FAKE'),
+    },
+}))
+
+beforeEach(() => {
+    vi.clearAllMocks()
+})
 
 // ---------------------------------------------------------------------------
 // computeCardDimensions
@@ -132,5 +184,99 @@ describe('useQrPdf.generateAndDownload', () => {
     it('DEFAULT_GENERATE_OPTIONS has deduplicateAvs=true and skipInvalidRows=true', () => {
         expect(DEFAULT_GENERATE_OPTIONS.deduplicateAvs).toBe(true)
         expect(DEFAULT_GENERATE_OPTIONS.skipInvalidRows).toBe(true)
+    })
+
+    it('generates PDF and returns summary for valid rows', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload, progress, isGenerating, summary } =
+            useQrPdf()
+
+        const rows = [
+            { name: 'Doe', firstname: 'Jane', avs_number: '756.1234.5678.97' },
+            {
+                name: 'Smith',
+                firstname: 'John',
+                avs_number: '756.9876.5432.10',
+            },
+        ]
+        const mapping = {
+            name: 'name',
+            firstname: 'firstname',
+            avs_number: 'avs_number',
+        }
+        const config: GridConfig = { cols: 2, rows: 5 }
+
+        const result = await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+        })
+
+        expect(result.total).toBe(2)
+        expect(result.printed).toBe(2)
+        expect(result.duplicatesSkipped).toBe(0)
+        expect(result.invalidSkipped).toBe(0)
+        expect(mockSave).toHaveBeenCalledWith('qr-codes.pdf')
+        expect(mockAddImage).toHaveBeenCalledTimes(2)
+        expect(progress.value).toBe(100)
+        expect(isGenerating.value).toBe(false)
+        expect(summary.value).toEqual(result)
+    })
+
+    it('deduplicates AVS numbers when deduplicateAvs is true', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            { name: 'Doe', avs_number: '756.1234.5678.97' },
+            { name: 'Doe2', avs_number: '756.1234.5678.97' },
+            { name: 'Smith', avs_number: '756.9876.5432.10' },
+        ]
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
+
+        const result = await generateAndDownload(
+            rows,
+            mapping,
+            { cols: 2, rows: 5 },
+            {
+                deduplicateAvs: true,
+                skipInvalidRows: true,
+            }
+        )
+
+        expect(result.total).toBe(3)
+        expect(result.printed).toBe(2)
+        expect(result.duplicatesSkipped).toBe(1)
+        expect(mockAddImage).toHaveBeenCalledTimes(2)
+    })
+
+    it('adds a new page when cards exceed perPage', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = Array.from({ length: 3 }, (_, i) => ({
+            name: `Name${i}`,
+            avs_number: `756.000${i}.0000.0${i}`,
+        }))
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
+
+        await generateAndDownload(
+            rows,
+            mapping,
+            { cols: 1, rows: 1 },
+            {
+                deduplicateAvs: false,
+                skipInvalidRows: true,
+            }
+        )
+
+        expect(mockAddPage).toHaveBeenCalledTimes(2)
     })
 })

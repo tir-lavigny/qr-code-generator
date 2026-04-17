@@ -30,8 +30,8 @@ jobs:
             - name: Type-check
               run: npm run tsc
 
-            - name: Test
-              run: npx vitest run
+            - name: Test with coverage
+              run: npm run test:coverage
 
             - name: Build
               run: npm run build
