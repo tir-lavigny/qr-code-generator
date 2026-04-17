@@ -263,8 +263,8 @@ const NONE_VALUE = '__none__'
                     <div class="flex items-start gap-3">
                         <Checkbox
                             id="dedup-avs"
-                            :default-value="deduplicateAvs"
                             v-model:checked="deduplicateAvs"
+                            :default-value="deduplicateAvs"
                         />
                         <div class="space-y-0.5">
                             <Label for="dedup-avs" class="cursor-pointer">
@@ -280,8 +280,8 @@ const NONE_VALUE = '__none__'
                     <div class="flex items-start gap-3">
                         <Checkbox
                             id="skip-invalid"
-                            :default-value="skipInvalidRows"
                             v-model:checked="skipInvalidRows"
+                            :default-value="skipInvalidRows"
                         />
                         <div class="space-y-0.5">
                             <Label for="skip-invalid" class="cursor-pointer">
