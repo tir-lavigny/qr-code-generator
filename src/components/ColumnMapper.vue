@@ -33,7 +33,11 @@ import {
     NumberFieldInput,
 } from '@/components/ui/number-field'
 import { toast } from 'vue-sonner'
-import { TriangleAlertIcon, FileDownIcon } from 'lucide-vue-next'
+import {
+    TriangleAlertIcon,
+    FileDownIcon,
+    CheckCircleIcon,
+} from 'lucide-vue-next'
 import { Checkbox } from '@/components/ui/checkbox'
 
 const props = defineProps<{
@@ -89,7 +93,7 @@ const pageCount = computed(() =>
 )
 
 // — PDF generation —
-const { progress, isGenerating, skippedCount, generateAndDownload } = useQrPdf()
+const { progress, isGenerating, summary, generateAndDownload } = useQrPdf()
 
 // — Generation options —
 const deduplicateAvs = ref(DEFAULT_GENERATE_OPTIONS.deduplicateAvs)
@@ -109,12 +113,7 @@ async function onGenerate() {
             gridConfig.value,
             generateOptions.value
         )
-        const skipped = skippedCount.value
-        toast.success('PDF downloaded successfully!', {
-            description:
-                `${props.rows.length - skipped} QR codes across ${pageCount.value} page(s)` +
-                (skipped > 0 ? `, ${skipped} row(s) skipped.` : '.'),
-        })
+        toast.success('PDF downloaded successfully!')
     } catch (err) {
         toast.error('Failed to generate PDF', {
             description: err instanceof Error ? err.message : String(err),
@@ -318,6 +317,50 @@ const NONE_VALUE = '__none__'
                     :model-value="progress"
                     class="h-2"
                 />
+
+                <!-- Summary -->
+                <div
+                    v-if="summary && !isGenerating"
+                    class="bg-muted rounded-lg border p-4 text-sm"
+                >
+                    <div class="mb-2 flex items-center gap-2 font-medium">
+                        <CheckCircleIcon class="text-primary size-4" />
+                        Generation complete
+                    </div>
+                    <ul class="text-muted-foreground space-y-1">
+                        <li>
+                            <span class="text-foreground font-medium">{{
+                                summary.total
+                            }}</span>
+                            total rows in CSV
+                        </li>
+                        <li>
+                            <span class="text-foreground font-medium">{{
+                                summary.printed
+                            }}</span>
+                            QR codes printed
+                        </li>
+                        <li v-if="summary.duplicatesSkipped > 0">
+                            <span class="text-foreground font-medium">{{
+                                summary.duplicatesSkipped
+                            }}</span>
+                            duplicate AVS
+                            {{
+                                summary.duplicatesSkipped === 1
+                                    ? 'number'
+                                    : 'numbers'
+                            }}
+                            skipped
+                        </li>
+                        <li v-if="summary.invalidSkipped > 0">
+                            <span class="text-foreground font-medium">{{
+                                summary.invalidSkipped
+                            }}</span>
+                            {{ summary.invalidSkipped === 1 ? 'row' : 'rows' }}
+                            skipped due to missing data
+                        </li>
+                    </ul>
+                </div>
             </div>
         </CardContent>
     </Card>

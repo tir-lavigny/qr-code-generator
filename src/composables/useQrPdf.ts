@@ -44,10 +44,18 @@ export const DEFAULT_GENERATE_OPTIONS: GenerateOptions = {
     skipInvalidRows: true,
 }
 
+export interface GenerateSummary {
+    total: number
+    printed: number
+    duplicatesSkipped: number
+    invalidSkipped: number
+}
+
 export function useQrPdf() {
     const progress = ref(0)
     const isGenerating = ref(false)
     const skippedCount = ref(0)
+    const summary = ref<GenerateSummary | null>(null)
 
     async function generateAndDownload(
         rows: ParsedRow[],
@@ -55,7 +63,7 @@ export function useQrPdf() {
         config: GridConfig,
         options: GenerateOptions = DEFAULT_GENERATE_OPTIONS,
         filename = 'qr-codes.pdf'
-    ): Promise<void> {
+    ): Promise<GenerateSummary> {
         if (!mapping.avs_number || !mapping.name) {
             throw new Error(
                 'Column mapping for "name" and "avs_number" are required.'
@@ -65,6 +73,7 @@ export function useQrPdf() {
         isGenerating.value = true
         progress.value = 0
         skippedCount.value = 0
+        summary.value = null
 
         const { cardWidth, cardHeight } = computeCardDimensions(config)
         const perPage = config.cols * config.rows
@@ -77,6 +86,8 @@ export function useQrPdf() {
 
         const seenAvs = new Set<string>()
         let cardIndex = 0
+        let duplicatesSkipped = 0
+        let invalidSkipped = 0
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
@@ -89,6 +100,7 @@ export function useQrPdf() {
             // — Validation: missing required fields —
             if (!avsValue || !nameValue) {
                 if (options.skipInvalidRows) {
+                    invalidSkipped++
                     skippedCount.value++
                     progress.value = Math.round(((i + 1) / rows.length) * 100)
                     continue
@@ -102,6 +114,7 @@ export function useQrPdf() {
             // — Deduplication —
             if (options.deduplicateAvs) {
                 if (seenAvs.has(avsValue)) {
+                    duplicatesSkipped++
                     skippedCount.value++
                     progress.value = Math.round(((i + 1) / rows.length) * 100)
                     continue
@@ -155,7 +168,22 @@ export function useQrPdf() {
 
         doc.save(filename)
         isGenerating.value = false
+
+        const result: GenerateSummary = {
+            total: rows.length,
+            printed: cardIndex,
+            duplicatesSkipped,
+            invalidSkipped,
+        }
+        summary.value = result
+        return result
     }
 
-    return { progress, isGenerating, skippedCount, generateAndDownload }
+    return {
+        progress,
+        isGenerating,
+        skippedCount,
+        summary,
+        generateAndDownload,
+    }
 }
