@@ -7,10 +7,6 @@ export interface CsvParseResult {
     error: string | null
 }
 
-/**
- * Attempt to auto-detect which CSV column best matches an internal field.
- * Checks a list of candidate aliases against each header (case-insensitive).
- */
 const FIELD_ALIASES: Record<keyof ColumnMapping, string[]> = {
     name: ['name', 'nom', 'last_name', 'lastname', 'surname', 'nachname'],
     firstname: [
@@ -52,9 +48,6 @@ export function detectColumnMapping(headers: string[]): ColumnMapping {
     }
 }
 
-/**
- * Parse a raw CSV string. Testable in Node/jsdom without FileReaderSync.
- */
 export function parseCsvString(content: string): CsvParseResult {
     const results = Papa.parse<ParsedRow>(content, {
         header: true,
@@ -74,9 +67,6 @@ export function parseCsvString(content: string): CsvParseResult {
     return { headers, rows: results.data, error: null }
 }
 
-/**
- * Read a browser File and parse it as CSV.
- */
 export async function parseCsv(file: File): Promise<CsvParseResult> {
     const text = await file.text()
     return parseCsvString(text)

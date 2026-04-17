@@ -3,7 +3,7 @@ import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import type { ColumnMapping, GridConfig, ParsedRow } from '@/types/csv'
 
-// A4 dimensions in mm
+// A4 dimensions en mm
 const PAGE_WIDTH = 210
 const PAGE_HEIGHT = 297
 const PAGE_MARGIN = 10
@@ -33,9 +33,7 @@ async function generateQrDataUrl(text: string): Promise<string> {
 }
 
 export interface GenerateOptions {
-    /** Skip duplicate AVS numbers — only the first occurrence is printed. */
     deduplicateAvs: boolean
-    /** Skip rows with missing required fields instead of throwing an error. */
     skipInvalidRows: boolean
 }
 
@@ -97,7 +95,6 @@ export function useQrPdf() {
                 ? (row[mapping.firstname] ?? '').trim()
                 : ''
 
-            // — Validation: missing required fields —
             if (!avsValue || !nameValue) {
                 if (options.skipInvalidRows) {
                     invalidSkipped++
@@ -111,7 +108,6 @@ export function useQrPdf() {
                 }
             }
 
-            // — Deduplication —
             if (options.deduplicateAvs) {
                 if (seenAvs.has(avsValue)) {
                     duplicatesSkipped++
@@ -126,7 +122,6 @@ export function useQrPdf() {
                 .filter(Boolean)
                 .join(' ')
 
-            // Page break
             const posInPage = cardIndex % perPage
             if (cardIndex > 0 && posInPage === 0) {
                 doc.addPage()
@@ -138,7 +133,6 @@ export function useQrPdf() {
             const xCard = PAGE_MARGIN + col * cardWidth
             const yCard = PAGE_MARGIN + rowIndex * cardHeight
 
-            // QR code
             const qrSize = Math.min(cardHeight * 0.8, cardWidth * 0.45)
             const qrX = xCard + 3
             const qrY = yCard + (cardHeight - qrSize) / 2
@@ -146,7 +140,6 @@ export function useQrPdf() {
             const dataUrl = await generateQrDataUrl(avsValue)
             doc.addImage(dataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
 
-            // Name text — vertically centered, to the right of QR
             const textX = qrX + qrSize + 4
             const textY = yCard + cardHeight / 2
 
@@ -154,7 +147,6 @@ export function useQrPdf() {
             doc.setFont('helvetica', 'bold')
             doc.text(displayName, textX, textY, { baseline: 'middle' })
 
-            // Subtle card border
             doc.setDrawColor(220, 220, 220)
             doc.rect(xCard, yCard, cardWidth, cardHeight)
 

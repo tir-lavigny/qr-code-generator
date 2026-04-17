@@ -46,12 +46,10 @@ const props = defineProps<{
     initialMapping: ColumnMapping
 }>()
 
-// — Column mapping —
 const mappingName = ref<string>(props.initialMapping.name ?? '')
 const mappingFirstname = ref<string>(props.initialMapping.firstname ?? '')
 const mappingAvs = ref<string>(props.initialMapping.avs_number ?? '')
 
-// Sync when parent re-emits (new file uploaded)
 watch(
     () => props.initialMapping,
     (m) => {
@@ -80,7 +78,6 @@ const validationError = computed(() => {
     return null
 })
 
-// — Grid config —
 const gridCols = ref(DEFAULT_GRID_CONFIG.cols)
 const gridRows = ref(DEFAULT_GRID_CONFIG.rows)
 
@@ -93,10 +90,8 @@ const pageCount = computed(() =>
     totalPages(props.rows.length, gridConfig.value)
 )
 
-// — PDF generation —
 const { progress, isGenerating, summary, generateAndDownload } = useQrPdf()
 
-// — Generation options —
 const deduplicateAvs = ref(DEFAULT_GENERATE_OPTIONS.deduplicateAvs)
 const skipInvalidRows = ref(DEFAULT_GENERATE_OPTIONS.skipInvalidRows)
 
@@ -122,7 +117,6 @@ async function onGenerate() {
     }
 }
 
-// Null option label
 const NONE_VALUE = '__none__'
 </script>
 
@@ -136,9 +130,7 @@ const NONE_VALUE = '__none__'
             </CardDescription>
         </CardHeader>
         <CardContent class="space-y-6">
-            <!-- Column mapping -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <!-- Nom (requis) -->
                 <div class="space-y-1.5">
                     <Label>
                         Nom
@@ -162,7 +154,6 @@ const NONE_VALUE = '__none__'
                     </Select>
                 </div>
 
-                <!-- Prénom (optionnel) -->
                 <div class="space-y-1.5">
                     <Label>Prénom</Label>
                     <Select v-model="mappingFirstname">
@@ -186,7 +177,6 @@ const NONE_VALUE = '__none__'
                     </Select>
                 </div>
 
-                <!-- Numéro AVS (requis) -->
                 <div class="space-y-1.5">
                     <Label>
                         Numéro AVS
@@ -218,7 +208,6 @@ const NONE_VALUE = '__none__'
 
             <Separator />
 
-            <!-- Grid config -->
             <div class="space-y-3">
                 <p class="text-sm font-medium">Mise en page (A4)</p>
                 <div class="flex flex-wrap items-end gap-6">
@@ -263,7 +252,6 @@ const NONE_VALUE = '__none__'
 
             <Separator />
 
-            <!-- Processing options -->
             <div class="space-y-3">
                 <p class="text-sm font-medium">Options de traitement</p>
                 <div class="space-y-3">
@@ -306,7 +294,6 @@ const NONE_VALUE = '__none__'
 
             <Separator />
 
-            <!-- Generate -->
             <div class="space-y-3">
                 <Button
                     :disabled="!isValid || isGenerating"
@@ -327,7 +314,6 @@ const NONE_VALUE = '__none__'
                     class="h-2"
                 />
 
-                <!-- Summary -->
                 <div
                     v-if="summary && !isGenerating"
                     class="bg-muted rounded-lg border p-4 text-sm"

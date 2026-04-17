@@ -52,7 +52,6 @@ function goToStep(target: Step) {
 
     <main class="bg-background min-h-screen w-full px-4 py-10">
         <div class="mx-auto max-w-3xl space-y-8">
-            <!-- Header -->
             <div class="space-y-1">
                 <h1 class="text-2xl font-bold tracking-tight">
                     Générateur de QR Codes
@@ -63,7 +62,6 @@ function goToStep(target: Step) {
                 </p>
             </div>
 
-            <!-- Stepper -->
             <Stepper
                 :model-value="step === 'upload' ? 1 : 2"
                 class="flex w-full gap-2"
@@ -90,11 +88,9 @@ function goToStep(target: Step) {
                 </StepperItem>
             </Stepper>
 
-            <!-- Step content -->
             <UploadForm v-if="step === 'upload'" @parsed="onParsed" />
 
             <div v-else class="space-y-4">
-                <!-- Allow re-uploading from step 2 -->
                 <UploadForm @parsed="onParsed" />
                 <ColumnMapper
                     :headers="csvHeaders"
