@@ -26,8 +26,8 @@ const csvMapping = ref<ColumnMapping>({
 })
 
 const STEPS = [
-    { id: 'upload', label: 'Upload', icon: UploadIcon },
-    { id: 'map', label: 'Map & Generate', icon: SlidersHorizontalIcon },
+    { id: 'upload', label: 'Importer', icon: UploadIcon },
+    { id: 'map', label: 'Mapper & Générer', icon: SlidersHorizontalIcon },
 ] as const
 
 function onParsed(data: {
@@ -55,11 +55,11 @@ function goToStep(target: Step) {
             <!-- Header -->
             <div class="space-y-1">
                 <h1 class="text-2xl font-bold tracking-tight">
-                    QR Code Generator
+                    Générateur de QR Codes
                 </h1>
                 <p class="text-muted-foreground text-sm">
-                    Upload a CSV, map the columns, and download a print-ready
-                    PDF with QR codes.
+                    Importez un fichier CSV, mappez les colonnes, et téléchargez
+                    un PDF prêt à imprimer avec les QR codes.
                 </p>
             </div>
 

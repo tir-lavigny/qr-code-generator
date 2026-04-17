@@ -73,9 +73,10 @@ const isValid = computed(
 
 const validationError = computed(() => {
     if (!mapping.value.name && !mapping.value.avs_number)
-        return 'Please map the "Name" and "AVS Number" columns.'
-    if (!mapping.value.name) return 'Please map the "Name" column.'
-    if (!mapping.value.avs_number) return 'Please map the "AVS Number" column.'
+        return 'Veuillez mapper les colonnes « Nom » et « Numéro AVS ».'
+    if (!mapping.value.name) return 'Veuillez mapper la colonne « Nom ».'
+    if (!mapping.value.avs_number)
+        return 'Veuillez mapper la colonne « Numéro AVS ».'
     return null
 })
 
@@ -113,9 +114,9 @@ async function onGenerate() {
             gridConfig.value,
             generateOptions.value
         )
-        toast.success('PDF downloaded successfully!')
+        toast.success('PDF téléchargé avec succès !')
     } catch (err) {
-        toast.error('Failed to generate PDF', {
+        toast.error('Échec de la génération du PDF', {
             description: err instanceof Error ? err.message : String(err),
         })
     }
@@ -128,24 +129,26 @@ const NONE_VALUE = '__none__'
 <template>
     <Card class="w-full">
         <CardHeader>
-            <CardTitle>Map Columns</CardTitle>
+            <CardTitle>Mapper les colonnes</CardTitle>
             <CardDescription>
-                Match your CSV column names to the required fields, then
-                configure the print layout.
+                Associez les colonnes de votre CSV aux champs requis, puis
+                configurez la mise en page d'impression.
             </CardDescription>
         </CardHeader>
         <CardContent class="space-y-6">
             <!-- Column mapping -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <!-- Name (required) -->
+                <!-- Nom (requis) -->
                 <div class="space-y-1.5">
                     <Label>
-                        Name
+                        Nom
                         <span class="text-destructive ml-0.5">*</span>
                     </Label>
                     <Select v-model="mappingName">
                         <SelectTrigger>
-                            <SelectValue placeholder="Select column…" />
+                            <SelectValue
+                                placeholder="Sélectionner une colonne…"
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -159,16 +162,18 @@ const NONE_VALUE = '__none__'
                     </Select>
                 </div>
 
-                <!-- Firstname (optional) -->
+                <!-- Prénom (optionnel) -->
                 <div class="space-y-1.5">
-                    <Label>Firstname</Label>
+                    <Label>Prénom</Label>
                     <Select v-model="mappingFirstname">
                         <SelectTrigger>
-                            <SelectValue placeholder="Select column…" />
+                            <SelectValue
+                                placeholder="Sélectionner une colonne…"
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem :value="NONE_VALUE">
-                                — none —
+                                — aucun —
                             </SelectItem>
                             <SelectItem
                                 v-for="h in headers"
@@ -181,15 +186,17 @@ const NONE_VALUE = '__none__'
                     </Select>
                 </div>
 
-                <!-- AVS Number (required) -->
+                <!-- Numéro AVS (requis) -->
                 <div class="space-y-1.5">
                     <Label>
-                        AVS Number
+                        Numéro AVS
                         <span class="text-destructive ml-0.5">*</span>
                     </Label>
                     <Select v-model="mappingAvs">
                         <SelectTrigger>
-                            <SelectValue placeholder="Select column…" />
+                            <SelectValue
+                                placeholder="Sélectionner une colonne…"
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -213,10 +220,10 @@ const NONE_VALUE = '__none__'
 
             <!-- Grid config -->
             <div class="space-y-3">
-                <p class="text-sm font-medium">Print Layout (A4)</p>
+                <p class="text-sm font-medium">Mise en page (A4)</p>
                 <div class="flex flex-wrap items-end gap-6">
                     <div class="space-y-1.5">
-                        <Label>Columns per page</Label>
+                        <Label>Colonnes par page</Label>
                         <NumberField
                             v-model="gridCols"
                             :min="1"
@@ -232,7 +239,7 @@ const NONE_VALUE = '__none__'
                     </div>
 
                     <div class="space-y-1.5">
-                        <Label>Rows per page</Label>
+                        <Label>Lignes par page</Label>
                         <NumberField
                             v-model="gridRows"
                             :min="1"
@@ -248,8 +255,8 @@ const NONE_VALUE = '__none__'
                     </div>
 
                     <p class="text-muted-foreground text-sm">
-                        {{ gridCols * gridRows }} cards/page &mdash;
-                        {{ pageCount }} page(s) for {{ rows.length }} rows
+                        {{ gridCols * gridRows }} cartes/page &mdash;
+                        {{ pageCount }} page(s) pour {{ rows.length }} lignes
                     </p>
                 </div>
             </div>
@@ -258,7 +265,7 @@ const NONE_VALUE = '__none__'
 
             <!-- Processing options -->
             <div class="space-y-3">
-                <p class="text-sm font-medium">Processing Options</p>
+                <p class="text-sm font-medium">Options de traitement</p>
                 <div class="space-y-3">
                     <div class="flex items-start gap-3">
                         <Checkbox
@@ -268,11 +275,11 @@ const NONE_VALUE = '__none__'
                         />
                         <div class="space-y-0.5">
                             <Label for="dedup-avs" class="cursor-pointer">
-                                Deduplicate by AVS number
+                                Dédoublonner par numéro AVS
                             </Label>
                             <p class="text-muted-foreground text-xs">
-                                Only generate one QR code per unique AVS number.
-                                Subsequent duplicates are skipped.
+                                Génère un seul QR code par numéro AVS unique.
+                                Les doublons suivants sont ignorés.
                             </p>
                         </div>
                     </div>
@@ -285,12 +292,12 @@ const NONE_VALUE = '__none__'
                         />
                         <div class="space-y-0.5">
                             <Label for="skip-invalid" class="cursor-pointer">
-                                Skip rows with missing data
+                                Ignorer les lignes incomplètes
                             </Label>
                             <p class="text-muted-foreground text-xs">
-                                Silently ignore rows where name or AVS number is
-                                empty. When unchecked, missing data causes an
-                                error.
+                                Ignore silencieusement les lignes sans nom ou
+                                numéro AVS. Si décoché, les données manquantes
+                                provoquent une erreur.
                             </p>
                         </div>
                     </div>
@@ -308,7 +315,9 @@ const NONE_VALUE = '__none__'
                 >
                     <FileDownIcon class="mr-2 size-4" />
                     {{
-                        isGenerating ? 'Generating…' : 'Generate & Download PDF'
+                        isGenerating
+                            ? 'Génération en cours…'
+                            : 'Générer et télécharger le PDF'
                     }}
                 </Button>
 
@@ -325,39 +334,41 @@ const NONE_VALUE = '__none__'
                 >
                     <div class="mb-2 flex items-center gap-2 font-medium">
                         <CheckCircleIcon class="text-primary size-4" />
-                        Generation complete
+                        Génération terminée
                     </div>
                     <ul class="text-muted-foreground space-y-1">
                         <li>
                             <span class="text-foreground font-medium">{{
                                 summary.total
                             }}</span>
-                            total rows in CSV
+                            lignes dans le CSV
                         </li>
                         <li>
                             <span class="text-foreground font-medium">{{
                                 summary.printed
                             }}</span>
-                            QR codes printed
+                            QR codes générés
                         </li>
                         <li v-if="summary.duplicatesSkipped > 0">
                             <span class="text-foreground font-medium">{{
                                 summary.duplicatesSkipped
                             }}</span>
-                            duplicate AVS
-                            {{
-                                summary.duplicatesSkipped === 1
-                                    ? 'number'
-                                    : 'numbers'
+                            numéro{{
+                                summary.duplicatesSkipped > 1 ? 's' : ''
                             }}
-                            skipped
+                            AVS en doublon ignoré{{
+                                summary.duplicatesSkipped > 1 ? 's' : ''
+                            }}
                         </li>
                         <li v-if="summary.invalidSkipped > 0">
                             <span class="text-foreground font-medium">{{
                                 summary.invalidSkipped
                             }}</span>
-                            {{ summary.invalidSkipped === 1 ? 'row' : 'rows' }}
-                            skipped due to missing data
+                            ligne{{
+                                summary.invalidSkipped > 1 ? 's' : ''
+                            }}
+                            ignorée{{ summary.invalidSkipped > 1 ? 's' : '' }}
+                            (données manquantes)
                         </li>
                     </ul>
                 </div>

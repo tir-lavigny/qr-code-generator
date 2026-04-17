@@ -76,7 +76,7 @@ describe('useQrPdf.generateAndDownload', () => {
                 { name: null, firstname: null, avs_number: 'avs_number' },
                 { cols: 2, rows: 5 }
             )
-        ).rejects.toThrow(/"name"/)
+        ).rejects.toThrow(/« nom »/)
     })
 
     it('throws when avs_number mapping is missing', async () => {
@@ -89,7 +89,7 @@ describe('useQrPdf.generateAndDownload', () => {
                 { name: 'name', firstname: null, avs_number: null },
                 { cols: 2, rows: 5 }
             )
-        ).rejects.toThrow(/"avs_number"/)
+        ).rejects.toThrow(/« numéro AVS »/)
     })
 
     it('progress starts at 0 and isGenerating starts false', async () => {
@@ -110,7 +110,7 @@ describe('useQrPdf.generateAndDownload', () => {
                 { cols: 2, rows: 5 },
                 { deduplicateAvs: false, skipInvalidRows: false }
             )
-        ).rejects.toThrow(/missing required data/)
+        ).rejects.toThrow(/incomplète/)
     })
 
     it('skips invalid rows when skipInvalidRows is true and throws if all skipped', async () => {
@@ -124,7 +124,7 @@ describe('useQrPdf.generateAndDownload', () => {
                 { cols: 2, rows: 5 },
                 { deduplicateAvs: false, skipInvalidRows: true }
             )
-        ).rejects.toThrow(/No valid rows/)
+        ).rejects.toThrow(/Aucune ligne valide/)
 
         expect(skippedCount.value).toBe(1)
     })

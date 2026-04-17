@@ -66,7 +66,7 @@ export function useQrPdf() {
     ): Promise<GenerateSummary> {
         if (!mapping.avs_number || !mapping.name) {
             throw new Error(
-                'Column mapping for "name" and "avs_number" are required.'
+                'Le mapping des colonnes « nom » et « numéro AVS » est requis.'
             )
         }
 
@@ -106,7 +106,7 @@ export function useQrPdf() {
                     continue
                 } else {
                     throw new Error(
-                        `Row ${i + 1} is missing required data (name or AVS number).`
+                        `La ligne ${i + 1} est incomplète (nom ou numéro AVS manquant).`
                     )
                 }
             }
@@ -163,7 +163,9 @@ export function useQrPdf() {
         }
 
         if (cardIndex === 0) {
-            throw new Error('No valid rows to generate. PDF was not created.')
+            throw new Error(
+                "Aucune ligne valide à générer. Le PDF n'a pas été créé."
+            )
         }
 
         doc.save(filename)

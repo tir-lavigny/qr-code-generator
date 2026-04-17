@@ -68,15 +68,15 @@ async function onFileChange(event: Event) {
 <template>
     <Card class="w-full">
         <CardHeader>
-            <CardTitle>Upload CSV</CardTitle>
+            <CardTitle>Importer un CSV</CardTitle>
             <CardDescription>
-                Select a CSV file containing name, firstname and AVS number
-                columns.
+                Sélectionnez un fichier CSV contenant les colonnes nom, prénom
+                et numéro AVS.
             </CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
             <div class="grid w-full items-center gap-1.5">
-                <Label for="csv-file">CSV File</Label>
+                <Label for="csv-file">Fichier CSV</Label>
                 <Input
                     id="csv-file"
                     type="file"
@@ -92,13 +92,13 @@ async function onFileChange(event: Event) {
 
             <div v-if="rows.length > 0" class="space-y-2">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium">Preview</span>
-                    <Badge variant="secondary">{{ rows.length }} rows</Badge>
+                    <span class="text-sm font-medium">Aperçu</span>
+                    <Badge variant="secondary">{{ rows.length }} lignes</Badge>
                     <span
                         v-if="rows.length > PREVIEW_ROWS"
                         class="text-muted-foreground text-xs"
                     >
-                        showing first {{ PREVIEW_ROWS }}
+                        {{ PREVIEW_ROWS }} premières lignes affichées
                     </span>
                 </div>
 
