@@ -129,8 +129,8 @@ describe('useQrPdf.generateAndDownload', () => {
         expect(skippedCount.value).toBe(1)
     })
 
-    it('DEFAULT_GENERATE_OPTIONS has deduplicateAvs=false and skipInvalidRows=false', () => {
-        expect(DEFAULT_GENERATE_OPTIONS.deduplicateAvs).toBe(false)
-        expect(DEFAULT_GENERATE_OPTIONS.skipInvalidRows).toBe(false)
+    it('DEFAULT_GENERATE_OPTIONS has deduplicateAvs=true and skipInvalidRows=true', () => {
+        expect(DEFAULT_GENERATE_OPTIONS.deduplicateAvs).toBe(true)
+        expect(DEFAULT_GENERATE_OPTIONS.skipInvalidRows).toBe(true)
     })
 })

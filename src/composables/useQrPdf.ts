@@ -40,8 +40,8 @@ export interface GenerateOptions {
 }
 
 export const DEFAULT_GENERATE_OPTIONS: GenerateOptions = {
-    deduplicateAvs: false,
-    skipInvalidRows: false,
+    deduplicateAvs: true,
+    skipInvalidRows: true,
 }
 
 export function useQrPdf() {
