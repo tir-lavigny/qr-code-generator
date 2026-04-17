@@ -4,6 +4,8 @@ import { useQrPdf } from '@/composables/useQrPdf'
 import { totalPages } from '@/composables/useQrPdf'
 import type { ColumnMapping, GridConfig, ParsedRow } from '@/types/csv'
 import { DEFAULT_GRID_CONFIG } from '@/types/csv'
+import type { GenerateOptions } from '@/composables/useQrPdf'
+import { DEFAULT_GENERATE_OPTIONS } from '@/composables/useQrPdf'
 import {
     Card,
     CardContent,
@@ -32,6 +34,7 @@ import {
 } from '@/components/ui/number-field'
 import { toast } from 'vue-sonner'
 import { TriangleAlertIcon, FileDownIcon } from 'lucide-vue-next'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const props = defineProps<{
     headers: string[]
@@ -86,14 +89,31 @@ const pageCount = computed(() =>
 )
 
 // — PDF generation —
-const { progress, isGenerating, generateAndDownload } = useQrPdf()
+const { progress, isGenerating, skippedCount, generateAndDownload } = useQrPdf()
+
+// — Generation options —
+const deduplicateAvs = ref(DEFAULT_GENERATE_OPTIONS.deduplicateAvs)
+const skipInvalidRows = ref(DEFAULT_GENERATE_OPTIONS.skipInvalidRows)
+
+const generateOptions = computed<GenerateOptions>(() => ({
+    deduplicateAvs: deduplicateAvs.value,
+    skipInvalidRows: skipInvalidRows.value,
+}))
 
 async function onGenerate() {
     if (!isValid.value) return
     try {
-        await generateAndDownload(props.rows, mapping.value, gridConfig.value)
+        await generateAndDownload(
+            props.rows,
+            mapping.value,
+            gridConfig.value,
+            generateOptions.value
+        )
+        const skipped = skippedCount.value
         toast.success('PDF downloaded successfully!', {
-            description: `${props.rows.length} QR codes across ${pageCount.value} page(s).`,
+            description:
+                `${props.rows.length - skipped} QR codes across ${pageCount.value} page(s)` +
+                (skipped > 0 ? `, ${skipped} row(s) skipped.` : '.'),
         })
     } catch (err) {
         toast.error('Failed to generate PDF', {
@@ -232,6 +252,47 @@ const NONE_VALUE = '__none__'
                         {{ gridCols * gridRows }} cards/page &mdash;
                         {{ pageCount }} page(s) for {{ rows.length }} rows
                     </p>
+                </div>
+            </div>
+
+            <Separator />
+
+            <!-- Processing options -->
+            <div class="space-y-3">
+                <p class="text-sm font-medium">Processing Options</p>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <Checkbox
+                            id="dedup-avs"
+                            v-model:checked="deduplicateAvs"
+                        />
+                        <div class="space-y-0.5">
+                            <Label for="dedup-avs" class="cursor-pointer">
+                                Deduplicate by AVS number
+                            </Label>
+                            <p class="text-muted-foreground text-xs">
+                                Only generate one QR code per unique AVS number.
+                                Subsequent duplicates are skipped.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <Checkbox
+                            id="skip-invalid"
+                            v-model:checked="skipInvalidRows"
+                        />
+                        <div class="space-y-0.5">
+                            <Label for="skip-invalid" class="cursor-pointer">
+                                Skip rows with missing data
+                            </Label>
+                            <p class="text-muted-foreground text-xs">
+                                Silently ignore rows where name or AVS number is
+                                empty. When unchecked, missing data causes an
+                                error.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

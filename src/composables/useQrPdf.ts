@@ -32,14 +32,28 @@ async function generateQrDataUrl(text: string): Promise<string> {
     })
 }
 
+export interface GenerateOptions {
+    /** Skip duplicate AVS numbers — only the first occurrence is printed. */
+    deduplicateAvs: boolean
+    /** Skip rows with missing required fields instead of throwing an error. */
+    skipInvalidRows: boolean
+}
+
+export const DEFAULT_GENERATE_OPTIONS: GenerateOptions = {
+    deduplicateAvs: false,
+    skipInvalidRows: false,
+}
+
 export function useQrPdf() {
     const progress = ref(0)
     const isGenerating = ref(false)
+    const skippedCount = ref(0)
 
     async function generateAndDownload(
         rows: ParsedRow[],
         mapping: ColumnMapping,
         config: GridConfig,
+        options: GenerateOptions = DEFAULT_GENERATE_OPTIONS,
         filename = 'qr-codes.pdf'
     ): Promise<void> {
         if (!mapping.avs_number || !mapping.name) {
@@ -50,6 +64,7 @@ export function useQrPdf() {
 
         isGenerating.value = true
         progress.value = 0
+        skippedCount.value = 0
 
         const { cardWidth, cardHeight } = computeCardDimensions(config)
         const perPage = config.cols * config.rows
@@ -60,29 +75,55 @@ export function useQrPdf() {
             format: 'a4',
         })
 
+        const seenAvs = new Set<string>()
+        let cardIndex = 0
+
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
-            const avsValue = row[mapping.avs_number] ?? ''
-            const nameValue = row[mapping.name] ?? ''
+            const avsValue = (row[mapping.avs_number] ?? '').trim()
+            const nameValue = (row[mapping.name] ?? '').trim()
             const firstnameValue = mapping.firstname
-                ? (row[mapping.firstname] ?? '')
+                ? (row[mapping.firstname] ?? '').trim()
                 : ''
+
+            // — Validation: missing required fields —
+            if (!avsValue || !nameValue) {
+                if (options.skipInvalidRows) {
+                    skippedCount.value++
+                    progress.value = Math.round(((i + 1) / rows.length) * 100)
+                    continue
+                } else {
+                    throw new Error(
+                        `Row ${i + 1} is missing required data (name or AVS number).`
+                    )
+                }
+            }
+
+            // — Deduplication —
+            if (options.deduplicateAvs) {
+                if (seenAvs.has(avsValue)) {
+                    skippedCount.value++
+                    progress.value = Math.round(((i + 1) / rows.length) * 100)
+                    continue
+                }
+                seenAvs.add(avsValue)
+            }
 
             const displayName = [firstnameValue, nameValue]
                 .filter(Boolean)
                 .join(' ')
 
             // Page break
-            const posInPage = i % perPage
-            if (i > 0 && posInPage === 0) {
+            const posInPage = cardIndex % perPage
+            if (cardIndex > 0 && posInPage === 0) {
                 doc.addPage()
             }
 
             const col = posInPage % config.cols
-            const row_ = Math.floor(posInPage / config.cols)
+            const rowIndex = Math.floor(posInPage / config.cols)
 
             const xCard = PAGE_MARGIN + col * cardWidth
-            const yCard = PAGE_MARGIN + row_ * cardHeight
+            const yCard = PAGE_MARGIN + rowIndex * cardHeight
 
             // QR code
             const qrSize = Math.min(cardHeight * 0.8, cardWidth * 0.45)
@@ -100,16 +141,21 @@ export function useQrPdf() {
             doc.setFont('helvetica', 'bold')
             doc.text(displayName, textX, textY, { baseline: 'middle' })
 
-            // Optional card border (subtle)
+            // Subtle card border
             doc.setDrawColor(220, 220, 220)
             doc.rect(xCard, yCard, cardWidth, cardHeight)
 
+            cardIndex++
             progress.value = Math.round(((i + 1) / rows.length) * 100)
+        }
+
+        if (cardIndex === 0) {
+            throw new Error('No valid rows to generate. PDF was not created.')
         }
 
         doc.save(filename)
         isGenerating.value = false
     }
 
-    return { progress, isGenerating, generateAndDownload }
+    return { progress, isGenerating, skippedCount, generateAndDownload }
 }

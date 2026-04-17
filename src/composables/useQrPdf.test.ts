@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { computeCardDimensions, totalPages } from './useQrPdf'
+import {
+    computeCardDimensions,
+    totalPages,
+    DEFAULT_GENERATE_OPTIONS,
+} from './useQrPdf'
 import type { GridConfig } from '@/types/csv'
 
 // ---------------------------------------------------------------------------
@@ -93,5 +97,40 @@ describe('useQrPdf.generateAndDownload', () => {
         const { progress, isGenerating } = useQrPdf()
         expect(progress.value).toBe(0)
         expect(isGenerating.value).toBe(false)
+    })
+
+    it('throws on missing required row data when skipInvalidRows is false', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        await expect(
+            generateAndDownload(
+                [{ name: '', avs_number: '' }],
+                { name: 'name', firstname: null, avs_number: 'avs_number' },
+                { cols: 2, rows: 5 },
+                { deduplicateAvs: false, skipInvalidRows: false }
+            )
+        ).rejects.toThrow(/missing required data/)
+    })
+
+    it('skips invalid rows when skipInvalidRows is true and throws if all skipped', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload, skippedCount } = useQrPdf()
+
+        await expect(
+            generateAndDownload(
+                [{ name: '', avs_number: '' }],
+                { name: 'name', firstname: null, avs_number: 'avs_number' },
+                { cols: 2, rows: 5 },
+                { deduplicateAvs: false, skipInvalidRows: true }
+            )
+        ).rejects.toThrow(/No valid rows/)
+
+        expect(skippedCount.value).toBe(1)
+    })
+
+    it('DEFAULT_GENERATE_OPTIONS has deduplicateAvs=false and skipInvalidRows=false', () => {
+        expect(DEFAULT_GENERATE_OPTIONS.deduplicateAvs).toBe(false)
+        expect(DEFAULT_GENERATE_OPTIONS.skipInvalidRows).toBe(false)
     })
 })
