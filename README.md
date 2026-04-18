@@ -1,5 +1,18 @@
-# Vue 3 + TypeScript + Vite
+# QR Code Generator
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+A web app to generate QR codes in bulk from a CSV file and export them as a PDF.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## Features
+
+- Upload a CSV file and map columns to QR code content
+- Bulk QR code generation
+- Export to PDF
+
+## Development
+
+Requires Node.js `24.14.0` (see `.node-version`).
+
+```bash
+npm install
+npm run dev
+```
