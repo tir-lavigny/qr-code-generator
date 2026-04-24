@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import type { WorkBook } from 'xlsx'
 import { parseCsv, detectColumnMapping } from '@/composables/useCsvParser'
+import { readExcelFile } from '@/composables/useExcelParser'
 import type { ColumnMapping, ParsedRow } from '@/types/csv'
 import {
     Card,
@@ -26,9 +28,12 @@ import { TriangleAlertIcon } from 'lucide-vue-next'
 const PREVIEW_ROWS = 10
 
 const emit = defineEmits<{
-    parsed: [
+    /** Emitted when a CSV file is fully parsed and ready for column mapping */
+    csvParsed: [
         data: { headers: string[]; rows: ParsedRow[]; mapping: ColumnMapping },
     ]
+    /** Emitted when an Excel file is loaded — sheet selection is required next */
+    excelLoaded: [data: { sheetNames: string[]; workbook: WorkBook }]
 }>()
 
 const error = ref<string | null>(null)
@@ -45,8 +50,28 @@ async function onFileChange(event: Event) {
     headers.value = []
     rows.value = []
 
-    const result = await parseCsv(file)
+    const isExcel =
+        file.name.endsWith('.xlsx') ||
+        file.name.endsWith('.xls') ||
+        file.type ===
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.type === 'application/vnd.ms-excel'
 
+    if (isExcel) {
+        const result = await readExcelFile(file)
+        if (result.error || !result.workbook) {
+            error.value = result.error ?? 'Failed to read Excel file.'
+            return
+        }
+        emit('excelLoaded', {
+            sheetNames: result.sheetNames,
+            workbook: result.workbook,
+        })
+        return
+    }
+
+    // CSV path
+    const result = await parseCsv(file)
     if (result.error) {
         error.value = result.error
         return
@@ -56,31 +81,26 @@ async function onFileChange(event: Event) {
     rows.value = result.rows
 
     const mapping = detectColumnMapping(result.headers)
-
-    emit('parsed', {
-        headers: result.headers,
-        rows: result.rows,
-        mapping,
-    })
+    emit('csvParsed', { headers: result.headers, rows: result.rows, mapping })
 }
 </script>
 
 <template>
     <Card class="w-full">
         <CardHeader>
-            <CardTitle>Importer un CSV</CardTitle>
+            <CardTitle>Importer un fichier</CardTitle>
             <CardDescription>
-                Sélectionnez un fichier CSV contenant les colonnes nom, prénom
-                et numéro AVS.
+                Sélectionnez un fichier CSV ou Excel (.xlsx) contenant les
+                colonnes nom, prénom et numéro AVS.
             </CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
             <div class="grid w-full items-center gap-1.5">
-                <Label for="csv-file">Fichier CSV</Label>
+                <Label for="data-file">Fichier CSV ou Excel</Label>
                 <Input
-                    id="csv-file"
+                    id="data-file"
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.xlsx,.xls"
                     @change="onFileChange"
                 />
             </div>

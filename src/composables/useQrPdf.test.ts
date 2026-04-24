@@ -6,10 +6,6 @@ import {
 } from './useQrPdf'
 import type { GridConfig } from '@/types/csv'
 
-// ---------------------------------------------------------------------------
-// Mocks for jsPDF and qrcode (must be hoisted before dynamic imports)
-// ---------------------------------------------------------------------------
-
 const {
     mockSave,
     mockAddImage,
@@ -58,17 +54,12 @@ beforeEach(() => {
     vi.clearAllMocks()
 })
 
-// ---------------------------------------------------------------------------
-// computeCardDimensions
-// ---------------------------------------------------------------------------
-
 describe('computeCardDimensions', () => {
     it('computes correct card size for 2x5 grid on A4', () => {
         const config: GridConfig = { cols: 2, rows: 5 }
         const { cardWidth, cardHeight } = computeCardDimensions(config)
-        // A4: 210×297mm, margin 10mm each side
-        expect(cardWidth).toBeCloseTo((210 - 20) / 2) // 95mm
-        expect(cardHeight).toBeCloseTo((297 - 20) / 5) // 55.4mm
+        expect(cardWidth).toBeCloseTo((210 - 20) / 2)
+        expect(cardHeight).toBeCloseTo((297 - 20) / 5)
     })
 
     it('computes correct card size for 3x4 grid', () => {
@@ -85,10 +76,6 @@ describe('computeCardDimensions', () => {
         expect(cardHeight).toBeCloseTo(277)
     })
 })
-
-// ---------------------------------------------------------------------------
-// totalPages
-// ---------------------------------------------------------------------------
 
 describe('totalPages', () => {
     it('returns 1 page for exactly 10 rows with 2x5 grid', () => {
@@ -108,17 +95,12 @@ describe('totalPages', () => {
     })
 
     it('handles non-divisible row counts correctly', () => {
-        expect(totalPages(21, { cols: 3, rows: 3 })).toBe(3) // 9 per page → ceil(21/9)=3
+        expect(totalPages(21, { cols: 3, rows: 3 })).toBe(3)
     })
 })
 
-// ---------------------------------------------------------------------------
-// useQrPdf — generateAndDownload validation
-// ---------------------------------------------------------------------------
-
 describe('useQrPdf.generateAndDownload', () => {
     it('throws when name mapping is missing', async () => {
-        // Dynamically import to keep mock scope clean
         const { useQrPdf } = await import('./useQrPdf')
         const { generateAndDownload } = useQrPdf()
 
@@ -188,16 +170,11 @@ describe('useQrPdf.generateAndDownload', () => {
 
     it('generates PDF and returns summary for valid rows', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload, progress, isGenerating, summary } =
-            useQrPdf()
+        const { generateAndDownload, progress, isGenerating, summary } = useQrPdf()
 
         const rows = [
             { name: 'Doe', firstname: 'Jane', avs_number: '756.1234.5678.97' },
-            {
-                name: 'Smith',
-                firstname: 'John',
-                avs_number: '756.9876.5432.10',
-            },
+            { name: 'Smith', firstname: 'John', avs_number: '756.9876.5432.10' },
         ]
         const mapping = {
             name: 'name',
@@ -231,21 +208,12 @@ describe('useQrPdf.generateAndDownload', () => {
             { name: 'Doe2', avs_number: '756.1234.5678.97' },
             { name: 'Smith', avs_number: '756.9876.5432.10' },
         ]
-        const mapping = {
-            name: 'name',
-            firstname: null,
-            avs_number: 'avs_number',
-        }
+        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
 
-        const result = await generateAndDownload(
-            rows,
-            mapping,
-            { cols: 2, rows: 5 },
-            {
-                deduplicateAvs: true,
-                skipInvalidRows: true,
-            }
-        )
+        const result = await generateAndDownload(rows, mapping, { cols: 2, rows: 5 }, {
+            deduplicateAvs: true,
+            skipInvalidRows: true,
+        })
 
         expect(result.total).toBe(3)
         expect(result.printed).toBe(2)
@@ -261,21 +229,12 @@ describe('useQrPdf.generateAndDownload', () => {
             name: `Name${i}`,
             avs_number: `756.000${i}.0000.0${i}`,
         }))
-        const mapping = {
-            name: 'name',
-            firstname: null,
-            avs_number: 'avs_number',
-        }
+        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
 
-        await generateAndDownload(
-            rows,
-            mapping,
-            { cols: 1, rows: 1 },
-            {
-                deduplicateAvs: false,
-                skipInvalidRows: true,
-            }
-        )
+        await generateAndDownload(rows, mapping, { cols: 1, rows: 1 }, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+        })
 
         expect(mockAddPage).toHaveBeenCalledTimes(2)
     })
