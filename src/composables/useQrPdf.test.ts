@@ -15,6 +15,7 @@ const {
     mockSetFontSize,
     mockSetFont,
     mockSetDrawColor,
+    mockGetTextWidth,
 } = vi.hoisted(() => ({
     mockSave: vi.fn(),
     mockAddImage: vi.fn(),
@@ -24,6 +25,7 @@ const {
     mockSetFontSize: vi.fn(),
     mockSetFont: vi.fn(),
     mockSetDrawColor: vi.fn(),
+    mockGetTextWidth: vi.fn().mockReturnValue(10),
 }))
 
 vi.mock('jspdf', () => {
@@ -36,6 +38,7 @@ vi.mock('jspdf', () => {
         setFont: mockSetFont,
         setDrawColor: mockSetDrawColor,
         save: mockSave,
+        getTextWidth: mockGetTextWidth,
     }
     return {
         jsPDF: vi.fn().mockImplementation(function () {

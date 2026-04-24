@@ -118,10 +118,6 @@ export function useQrPdf() {
                 seenAvs.add(avsValue)
             }
 
-            const displayName = [firstnameValue, nameValue]
-                .filter(Boolean)
-                .join(' ')
-
             const posInPage = cardIndex % perPage
             if (cardIndex > 0 && posInPage === 0) {
                 doc.addPage()
@@ -141,11 +137,33 @@ export function useQrPdf() {
             doc.addImage(dataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
 
             const textX = qrX + qrSize + 4
-            const textY = yCard + cardHeight / 2
+            const textAreaWidth = cardWidth - qrSize - 3 - 4 - 3
 
-            doc.setFontSize(11)
+            const lines = [firstnameValue, nameValue].filter(Boolean)
+
+            let fontSize = 11
             doc.setFont('helvetica', 'bold')
-            doc.text(displayName, textX, textY, { baseline: 'middle' })
+            while (fontSize > 5) {
+                doc.setFontSize(fontSize)
+                const fits = lines.every(
+                    (line) => doc.getTextWidth(line) <= textAreaWidth
+                )
+                if (fits) break
+                fontSize -= 0.5
+            }
+            doc.setFontSize(fontSize)
+
+            const lineHeight = fontSize * 0.3528 * 1.35
+            const totalTextHeight = lines.length * lineHeight
+            const textStartY =
+                yCard + (cardHeight - totalTextHeight) / 2 + lineHeight / 2
+
+            lines.forEach((line, idx) => {
+                doc.text(line, textX, textStartY + idx * lineHeight, {
+                    baseline: 'middle',
+                    maxWidth: textAreaWidth,
+                })
+            })
 
             doc.setDrawColor(220, 220, 220)
             doc.rect(xCard, yCard, cardWidth, cardHeight)
