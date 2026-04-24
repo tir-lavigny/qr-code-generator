@@ -15,6 +15,7 @@ const {
     mockSetFontSize,
     mockSetFont,
     mockSetDrawColor,
+    mockGetTextWidth,
 } = vi.hoisted(() => ({
     mockSave: vi.fn(),
     mockAddImage: vi.fn(),
@@ -24,6 +25,7 @@ const {
     mockSetFontSize: vi.fn(),
     mockSetFont: vi.fn(),
     mockSetDrawColor: vi.fn(),
+    mockGetTextWidth: vi.fn().mockReturnValue(10),
 }))
 
 vi.mock('jspdf', () => {
@@ -36,6 +38,7 @@ vi.mock('jspdf', () => {
         setFont: mockSetFont,
         setDrawColor: mockSetDrawColor,
         save: mockSave,
+        getTextWidth: mockGetTextWidth,
     }
     return {
         jsPDF: vi.fn().mockImplementation(function () {
@@ -52,6 +55,7 @@ vi.mock('qrcode', () => ({
 
 beforeEach(() => {
     vi.clearAllMocks()
+    mockGetTextWidth.mockReturnValue(10)
 })
 
 describe('computeCardDimensions', () => {
@@ -202,6 +206,27 @@ describe('useQrPdf.generateAndDownload', () => {
         expect(progress.value).toBe(100)
         expect(isGenerating.value).toBe(false)
         expect(summary.value).toEqual(result)
+    })
+
+    it('shrinks font size when a name is too wide for the text area', async () => {
+        mockGetTextWidth.mockReturnValue(999)
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        await generateAndDownload(
+            [
+                {
+                    name: 'VeryLongLastNameThatOverflows',
+                    avs_number: '756.1234.5678.97',
+                },
+            ],
+            { name: 'name', firstname: null, avs_number: 'avs_number' },
+            { cols: 2, rows: 5 },
+            { deduplicateAvs: false, skipInvalidRows: true }
+        )
+
+        const fontSizeCalls = mockSetFontSize.mock.calls.map((c) => c[0])
+        expect(Math.min(...fontSizeCalls)).toBeLessThan(11)
     })
 
     it('deduplicates AVS numbers when deduplicateAvs is true', async () => {

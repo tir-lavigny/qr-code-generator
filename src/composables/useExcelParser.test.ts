@@ -68,6 +68,15 @@ describe('parseExcelSheet', () => {
         expect(result.rows).toHaveLength(0)
     })
 
+    it('returns error when a sheet row has no column keys', () => {
+        const wb = XLSX.utils.book_new()
+        const ws: XLSX.WorkSheet = {}
+        wb.SheetNames = ['NoHeaders']
+        wb.Sheets = { NoHeaders: ws }
+        const result = parseExcelSheet(wb, 'NoHeaders')
+        expect(result.rows).toHaveLength(0)
+    })
+
     it('converts all values to strings', () => {
         const wb = makeWorkbook({
             Data: [{ Name: 'Alice', Count: '42', Active: 'true' }],

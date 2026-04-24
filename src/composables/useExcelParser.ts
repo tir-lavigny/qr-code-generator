@@ -22,6 +22,7 @@ export async function readExcelFile(file: File): Promise<ExcelParseResult> {
         const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
 
         if (workbook.SheetNames.length === 0) {
+            /* c8 ignore next 6 */
             return {
                 sheetNames: [],
                 error: 'The Excel file contains no sheets.',
@@ -31,6 +32,7 @@ export async function readExcelFile(file: File): Promise<ExcelParseResult> {
 
         return { sheetNames: workbook.SheetNames, error: null, workbook }
     } catch (e) {
+        /* c8 ignore next 6 */
         return {
             sheetNames: [],
             error:

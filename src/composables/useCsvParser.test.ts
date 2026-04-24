@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectColumnMapping, parseCsvString } from './useCsvParser'
+import { detectColumnMapping, parseCsvString, parseCsv } from './useCsvParser'
 import type { ParsedRow } from '@/types/csv'
 
 describe('detectColumnMapping', () => {
@@ -80,5 +80,22 @@ describe('parseCsvString', () => {
         const csv = 'name,avs_number\n Doe , 756.1234.5678.90 '
         const result = parseCsvString(csv)
         expect(result.rows[0]['name']).toBe(' Doe ')
+    })
+})
+
+describe('parseCsv', () => {
+    it('reads a File and returns parsed headers and rows', async () => {
+        const csv = 'name,avs_number\nDoe,756.1234.5678.90'
+        const file = new File([csv], 'test.csv', { type: 'text/csv' })
+        const result = await parseCsv(file)
+        expect(result.error).toBeNull()
+        expect(result.headers).toEqual(['name', 'avs_number'])
+        expect(result.rows).toHaveLength(1)
+    })
+
+    it('returns error for an empty file', async () => {
+        const file = new File([''], 'empty.csv', { type: 'text/csv' })
+        const result = await parseCsv(file)
+        expect(result.error).not.toBeNull()
     })
 })
