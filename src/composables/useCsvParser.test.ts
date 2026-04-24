@@ -2,10 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { detectColumnMapping, parseCsvString } from './useCsvParser'
 import type { ParsedRow } from '@/types/csv'
 
-// ---------------------------------------------------------------------------
-// detectColumnMapping
-// ---------------------------------------------------------------------------
-
 describe('detectColumnMapping', () => {
     it('detects exact internal field names', () => {
         const mapping = detectColumnMapping(['name', 'firstname', 'avs_number'])
@@ -46,14 +42,6 @@ describe('detectColumnMapping', () => {
         expect(mapping.firstname).toBeNull()
     })
 })
-
-// ---------------------------------------------------------------------------
-// parseCsv — uses a mock File backed by a Blob
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// parseCsvString
-// ---------------------------------------------------------------------------
 
 describe('parseCsvString', () => {
     it('parses a valid CSV and returns headers + rows', () => {

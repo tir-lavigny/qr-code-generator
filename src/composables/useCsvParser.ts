@@ -27,6 +27,11 @@ const FIELD_ALIASES: Record<keyof ColumnMapping, string[]> = {
         'ahv',
         'ahv_number',
         'ssn',
+        'insurancenumber',
+        'insurance_number',
+        'insurance number',
+        'no avs',
+        'n° avs',
     ],
 }
 

@@ -6,10 +6,6 @@ import {
 } from './useQrPdf'
 import type { GridConfig } from '@/types/csv'
 
-// ---------------------------------------------------------------------------
-// Mocks for jsPDF and qrcode (must be hoisted before dynamic imports)
-// ---------------------------------------------------------------------------
-
 const {
     mockSave,
     mockAddImage,
@@ -58,17 +54,12 @@ beforeEach(() => {
     vi.clearAllMocks()
 })
 
-// ---------------------------------------------------------------------------
-// computeCardDimensions
-// ---------------------------------------------------------------------------
-
 describe('computeCardDimensions', () => {
     it('computes correct card size for 2x5 grid on A4', () => {
         const config: GridConfig = { cols: 2, rows: 5 }
         const { cardWidth, cardHeight } = computeCardDimensions(config)
-        // A4: 210×297mm, margin 10mm each side
-        expect(cardWidth).toBeCloseTo((210 - 20) / 2) // 95mm
-        expect(cardHeight).toBeCloseTo((297 - 20) / 5) // 55.4mm
+        expect(cardWidth).toBeCloseTo((210 - 20) / 2)
+        expect(cardHeight).toBeCloseTo((297 - 20) / 5)
     })
 
     it('computes correct card size for 3x4 grid', () => {
@@ -85,10 +76,6 @@ describe('computeCardDimensions', () => {
         expect(cardHeight).toBeCloseTo(277)
     })
 })
-
-// ---------------------------------------------------------------------------
-// totalPages
-// ---------------------------------------------------------------------------
 
 describe('totalPages', () => {
     it('returns 1 page for exactly 10 rows with 2x5 grid', () => {
@@ -108,17 +95,12 @@ describe('totalPages', () => {
     })
 
     it('handles non-divisible row counts correctly', () => {
-        expect(totalPages(21, { cols: 3, rows: 3 })).toBe(3) // 9 per page → ceil(21/9)=3
+        expect(totalPages(21, { cols: 3, rows: 3 })).toBe(3)
     })
 })
 
-// ---------------------------------------------------------------------------
-// useQrPdf — generateAndDownload validation
-// ---------------------------------------------------------------------------
-
 describe('useQrPdf.generateAndDownload', () => {
     it('throws when name mapping is missing', async () => {
-        // Dynamically import to keep mock scope clean
         const { useQrPdf } = await import('./useQrPdf')
         const { generateAndDownload } = useQrPdf()
 

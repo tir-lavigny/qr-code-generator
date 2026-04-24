@@ -31,3 +31,7 @@ coverage
 
 # SSH deploy keys (local only, never commit)
 .keys/
+
+# Local data files
+*.xlsx
+*.xls
