@@ -170,11 +170,16 @@ describe('useQrPdf.generateAndDownload', () => {
 
     it('generates PDF and returns summary for valid rows', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload, progress, isGenerating, summary } = useQrPdf()
+        const { generateAndDownload, progress, isGenerating, summary } =
+            useQrPdf()
 
         const rows = [
             { name: 'Doe', firstname: 'Jane', avs_number: '756.1234.5678.97' },
-            { name: 'Smith', firstname: 'John', avs_number: '756.9876.5432.10' },
+            {
+                name: 'Smith',
+                firstname: 'John',
+                avs_number: '756.9876.5432.10',
+            },
         ]
         const mapping = {
             name: 'name',
@@ -208,12 +213,21 @@ describe('useQrPdf.generateAndDownload', () => {
             { name: 'Doe2', avs_number: '756.1234.5678.97' },
             { name: 'Smith', avs_number: '756.9876.5432.10' },
         ]
-        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
 
-        const result = await generateAndDownload(rows, mapping, { cols: 2, rows: 5 }, {
-            deduplicateAvs: true,
-            skipInvalidRows: true,
-        })
+        const result = await generateAndDownload(
+            rows,
+            mapping,
+            { cols: 2, rows: 5 },
+            {
+                deduplicateAvs: true,
+                skipInvalidRows: true,
+            }
+        )
 
         expect(result.total).toBe(3)
         expect(result.printed).toBe(2)
@@ -229,12 +243,21 @@ describe('useQrPdf.generateAndDownload', () => {
             name: `Name${i}`,
             avs_number: `756.000${i}.0000.0${i}`,
         }))
-        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
 
-        await generateAndDownload(rows, mapping, { cols: 1, rows: 1 }, {
-            deduplicateAvs: false,
-            skipInvalidRows: true,
-        })
+        await generateAndDownload(
+            rows,
+            mapping,
+            { cols: 1, rows: 1 },
+            {
+                deduplicateAvs: false,
+                skipInvalidRows: true,
+            }
+        )
 
         expect(mockAddPage).toHaveBeenCalledTimes(2)
     })

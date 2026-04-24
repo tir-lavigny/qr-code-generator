@@ -3,7 +3,9 @@ import * as XLSX from 'xlsx'
 import { readExcelFile, parseExcelSheet } from './useExcelParser'
 import { detectColumnMapping } from './useCsvParser'
 
-function makeWorkbook(sheets: Record<string, Record<string, string>[]>): XLSX.WorkBook {
+function makeWorkbook(
+    sheets: Record<string, Record<string, string>[]>
+): XLSX.WorkBook {
     const wb = XLSX.utils.book_new()
     for (const [name, data] of Object.entries(sheets)) {
         const ws = XLSX.utils.json_to_sheet(data)
@@ -13,7 +15,10 @@ function makeWorkbook(sheets: Record<string, Record<string, string>[]>): XLSX.Wo
 }
 
 function workbookToFile(wb: XLSX.WorkBook, filename = 'test.xlsx'): File {
-    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
+    const buf = XLSX.write(wb, {
+        type: 'array',
+        bookType: 'xlsx',
+    }) as ArrayBuffer
     return new File([buf], filename, {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
@@ -23,13 +28,25 @@ describe('parseExcelSheet', () => {
     it('returns headers and rows from a valid sheet', () => {
         const wb = makeWorkbook({
             Members: [
-                { FirstName: 'John', LastName: 'Doe', InsuranceNumber: '756.1234.5678.90' },
-                { FirstName: 'Jane', LastName: 'Smith', InsuranceNumber: '756.9876.5432.10' },
+                {
+                    FirstName: 'John',
+                    LastName: 'Doe',
+                    InsuranceNumber: '756.1234.5678.90',
+                },
+                {
+                    FirstName: 'Jane',
+                    LastName: 'Smith',
+                    InsuranceNumber: '756.9876.5432.10',
+                },
             ],
         })
         const result = parseExcelSheet(wb, 'Members')
         expect(result.error).toBeNull()
-        expect(result.headers).toEqual(['FirstName', 'LastName', 'InsuranceNumber'])
+        expect(result.headers).toEqual([
+            'FirstName',
+            'LastName',
+            'InsuranceNumber',
+        ])
         expect(result.rows).toHaveLength(2)
         expect(result.rows[0]['FirstName']).toBe('John')
         expect(result.rows[0]['InsuranceNumber']).toBe('756.1234.5678.90')
@@ -77,7 +94,13 @@ describe('parseExcelSheet', () => {
 describe('readExcelFile', () => {
     it('returns sheet names and workbook for a valid .xlsx file', async () => {
         const wb = makeWorkbook({
-            DataSource: [{ FirstName: 'A', LastName: 'B', InsuranceNumber: '756.0000.0000.00' }],
+            DataSource: [
+                {
+                    FirstName: 'A',
+                    LastName: 'B',
+                    InsuranceNumber: '756.0000.0000.00',
+                },
+            ],
             Translations: [{ key: 'val' }],
         })
         const file = workbookToFile(wb)
@@ -89,7 +112,13 @@ describe('readExcelFile', () => {
 
     it('returns the correct sheet names', async () => {
         const wb = makeWorkbook({
-            DataSource: [{ FirstName: 'A', LastName: 'B', InsuranceNumber: '756.0000.0000.00' }],
+            DataSource: [
+                {
+                    FirstName: 'A',
+                    LastName: 'B',
+                    InsuranceNumber: '756.0000.0000.00',
+                },
+            ],
             Translations: [{ key: 'val' }],
         })
         const file = workbookToFile(wb)

@@ -22,14 +22,19 @@ export async function readExcelFile(file: File): Promise<ExcelParseResult> {
         const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
 
         if (workbook.SheetNames.length === 0) {
-            return { sheetNames: [], error: 'The Excel file contains no sheets.', workbook: null }
+            return {
+                sheetNames: [],
+                error: 'The Excel file contains no sheets.',
+                workbook: null,
+            }
         }
 
         return { sheetNames: workbook.SheetNames, error: null, workbook }
     } catch (e) {
         return {
             sheetNames: [],
-            error: e instanceof Error ? e.message : 'Failed to read Excel file.',
+            error:
+                e instanceof Error ? e.message : 'Failed to read Excel file.',
             workbook: null,
         }
     }
@@ -41,17 +46,25 @@ export async function readExcelFile(file: File): Promise<ExcelParseResult> {
  */
 export function parseExcelSheet(
     workbook: XLSX.WorkBook,
-    sheetName: string,
+    sheetName: string
 ): ExcelSheetParseResult {
     const worksheet = workbook.Sheets[sheetName]
     if (!worksheet) {
-        return { sheetName, headers: [], rows: [], error: `Sheet "${sheetName}" not found.` }
+        return {
+            sheetName,
+            headers: [],
+            rows: [],
+            error: `Sheet "${sheetName}" not found.`,
+        }
     }
 
-    const rawRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(worksheet, {
-        defval: '',
-        raw: false, // format dates and numbers as strings
-    })
+    const rawRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(
+        worksheet,
+        {
+            defval: '',
+            raw: false, // format dates and numbers as strings
+        }
+    )
 
     if (rawRows.length === 0) {
         return { sheetName, headers: [], rows: [], error: null }
@@ -60,7 +73,12 @@ export function parseExcelSheet(
     const headers = Object.keys(rawRows[0])
 
     if (headers.length === 0) {
-        return { sheetName, headers: [], rows: [], error: 'No columns found in the selected sheet.' }
+        return {
+            sheetName,
+            headers: [],
+            rows: [],
+            error: 'No columns found in the selected sheet.',
+        }
     }
 
     const rows: ParsedRow[] = rawRows

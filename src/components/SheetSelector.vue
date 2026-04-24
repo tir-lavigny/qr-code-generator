@@ -53,7 +53,9 @@ const sheetData = computed(() => {
 
 const rowCount = computed(() => sheetData.value?.rows.length ?? null)
 const previewHeaders = computed(() => sheetData.value?.headers ?? [])
-const previewRows = computed(() => sheetData.value?.rows.slice(0, PREVIEW_ROWS) ?? [])
+const previewRows = computed(
+    () => sheetData.value?.rows.slice(0, PREVIEW_ROWS) ?? []
+)
 
 function onConfirm() {
     if (!selectedSheet.value || !sheetData.value) return
@@ -106,10 +108,7 @@ function onConfirm() {
 
             <p v-if="error" class="text-destructive text-sm">{{ error }}</p>
 
-            <div
-                v-if="previewRows.length > 0"
-                class="space-y-2"
-            >
+            <div v-if="previewRows.length > 0" class="space-y-2">
                 <div class="flex items-center gap-2">
                     <span class="text-sm font-medium">Aperçu</span>
                     <span
@@ -133,10 +132,7 @@ function onConfirm() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow
-                                v-for="(row, i) in previewRows"
-                                :key="i"
-                            >
+                            <TableRow v-for="(row, i) in previewRows" :key="i">
                                 <TableCell
                                     v-for="header in previewHeaders"
                                     :key="header"

@@ -96,10 +96,7 @@ function goToStep(target: Step) {
                 </p>
             </div>
 
-            <Stepper
-                :model-value="stepIndex(step)"
-                class="flex w-full gap-2"
-            >
+            <Stepper :model-value="stepIndex(step)" class="flex w-full gap-2">
                 <StepperItem
                     v-for="(s, i) in STEPS"
                     :key="s.id"
