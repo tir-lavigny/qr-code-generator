@@ -149,25 +149,26 @@ function goToStep(target: Step) {
                 />
             </template>
 
-            <template v-else-if="step === 'map'">
+            <template v-else-if="step === 'map' || step === 'preview'">
                 <UploadForm
+                    v-show="step === 'map'"
                     @csv-parsed="onCsvParsed"
                     @excel-loaded="onExcelLoaded"
                 />
                 <ColumnMapper
+                    v-show="step === 'map'"
                     :headers="csvHeaders"
                     :rows="csvRows"
                     :initial-mapping="csvMapping"
                     @generated="onGenerated"
                 />
+                <PdfPreview
+                    v-if="step === 'preview' && previewBlob && previewSummary"
+                    :blob="previewBlob"
+                    :summary="previewSummary"
+                    @back="step = 'map'"
+                />
             </template>
-
-            <PdfPreview
-                v-else-if="step === 'preview' && previewBlob && previewSummary"
-                :blob="previewBlob"
-                :summary="previewSummary"
-                @back="step = 'map'"
-            />
         </div>
     </main>
 </template>
