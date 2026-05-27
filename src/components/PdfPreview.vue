@@ -2,12 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import type { GenerateSummary } from '@/composables/useQrPdf'
 import { downloadPdf } from '@/composables/useQrPdf'
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeftIcon, DownloadIcon, CheckCircleIcon } from 'lucide-vue-next'

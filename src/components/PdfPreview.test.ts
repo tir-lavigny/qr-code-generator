@@ -10,7 +10,8 @@ const { mockDownloadPdf } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/composables/useQrPdf', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@/composables/useQrPdf')>()
+    const actual =
+        await importOriginal<typeof import('@/composables/useQrPdf')>()
     return { ...actual, downloadPdf: mockDownloadPdf }
 })
 
@@ -62,11 +63,18 @@ describe('PdfPreview', () => {
 
         wrapper.unmount()
 
-        expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:fake-preview-url')
+        expect(mockRevokeObjectURL).toHaveBeenCalledWith(
+            'blob:fake-preview-url'
+        )
     })
 
     it('renders all four stats', () => {
-        const props = makeProps({ total: 20, printed: 15, duplicatesSkipped: 3, invalidSkipped: 2 })
+        const props = makeProps({
+            total: 20,
+            printed: 15,
+            duplicatesSkipped: 3,
+            invalidSkipped: 2,
+        })
         const wrapper = mount(PdfPreview, { props })
         const text = wrapper.text()
 

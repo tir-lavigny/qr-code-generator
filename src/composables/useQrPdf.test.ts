@@ -19,7 +19,9 @@ const {
     mockSetDrawColor,
     mockGetTextWidth,
 } = vi.hoisted(() => ({
-    mockOutput: vi.fn().mockReturnValue(new Blob(['fake'], { type: 'application/pdf' })),
+    mockOutput: vi
+        .fn()
+        .mockReturnValue(new Blob(['fake'], { type: 'application/pdf' })),
     mockAddImage: vi.fn(),
     mockAddPage: vi.fn(),
     mockText: vi.fn(),
@@ -72,7 +74,11 @@ beforeEach(() => {
 
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
         if (tag === 'a') {
-            return { href: '', download: '', click: mockClick } as unknown as HTMLElement
+            return {
+                href: '',
+                download: '',
+                click: mockClick,
+            } as unknown as HTMLElement
         }
         return document.createElement(tag)
     })
@@ -134,14 +140,24 @@ describe('downloadPdf', () => {
 
     it('sets the correct download filename on the anchor', () => {
         const blob = new Blob(['pdf'], { type: 'application/pdf' })
-        let capturedAnchor: { href: string; download: string; click: () => void } | null = null
-        vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-            if (tag === 'a') {
-                capturedAnchor = { href: '', download: '', click: mockClick }
-                return capturedAnchor as unknown as HTMLElement
+        let capturedAnchor: {
+            href: string
+            download: string
+            click: () => void
+        } | null = null
+        vi.spyOn(document, 'createElement').mockImplementation(
+            (tag: string) => {
+                if (tag === 'a') {
+                    capturedAnchor = {
+                        href: '',
+                        download: '',
+                        click: mockClick,
+                    }
+                    return capturedAnchor as unknown as HTMLElement
+                }
+                return document.createElement(tag)
             }
-            return document.createElement(tag)
-        })
+        )
 
         downloadPdf(blob, 'my-file.pdf')
 
@@ -158,14 +174,24 @@ describe('downloadPdf', () => {
 
     it('uses qr-codes.pdf as the default filename', () => {
         const blob = new Blob(['pdf'], { type: 'application/pdf' })
-        let capturedAnchor: { href: string; download: string; click: () => void } | null = null
-        vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-            if (tag === 'a') {
-                capturedAnchor = { href: '', download: '', click: mockClick }
-                return capturedAnchor as unknown as HTMLElement
+        let capturedAnchor: {
+            href: string
+            download: string
+            click: () => void
+        } | null = null
+        vi.spyOn(document, 'createElement').mockImplementation(
+            (tag: string) => {
+                if (tag === 'a') {
+                    capturedAnchor = {
+                        href: '',
+                        download: '',
+                        click: mockClick,
+                    }
+                    return capturedAnchor as unknown as HTMLElement
+                }
+                return document.createElement(tag)
             }
-            return document.createElement(tag)
-        })
+        )
 
         downloadPdf(blob)
 
@@ -249,7 +275,11 @@ describe('useQrPdf.generatePdf', () => {
 
         const rows = [
             { name: 'Doe', firstname: 'Jane', avs_number: '756.1234.5678.97' },
-            { name: 'Smith', firstname: 'John', avs_number: '756.9876.5432.10' },
+            {
+                name: 'Smith',
+                firstname: 'John',
+                avs_number: '756.9876.5432.10',
+            },
         ]
         const mapping = {
             name: 'name',
@@ -281,7 +311,12 @@ describe('useQrPdf.generatePdf', () => {
         const { generatePdf } = useQrPdf()
 
         await generatePdf(
-            [{ name: 'VeryLongLastNameThatOverflows', avs_number: '756.1234.5678.97' }],
+            [
+                {
+                    name: 'VeryLongLastNameThatOverflows',
+                    avs_number: '756.1234.5678.97',
+                },
+            ],
             { name: 'name', firstname: null, avs_number: 'avs_number' },
             { cols: 2, rows: 5 },
             { deduplicateAvs: false, skipInvalidRows: true }
@@ -300,12 +335,21 @@ describe('useQrPdf.generatePdf', () => {
             { name: 'Doe2', avs_number: '756.1234.5678.97' },
             { name: 'Smith', avs_number: '756.9876.5432.10' },
         ]
-        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
 
-        const result = await generatePdf(rows, mapping, { cols: 2, rows: 5 }, {
-            deduplicateAvs: true,
-            skipInvalidRows: true,
-        })
+        const result = await generatePdf(
+            rows,
+            mapping,
+            { cols: 2, rows: 5 },
+            {
+                deduplicateAvs: true,
+                skipInvalidRows: true,
+            }
+        )
 
         expect(result.summary.total).toBe(3)
         expect(result.summary.printed).toBe(2)
@@ -321,12 +365,21 @@ describe('useQrPdf.generatePdf', () => {
             name: `Name${i}`,
             avs_number: `756.000${i}.0000.0${i}`,
         }))
-        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
 
-        await generatePdf(rows, mapping, { cols: 1, rows: 1 }, {
-            deduplicateAvs: false,
-            skipInvalidRows: true,
-        })
+        await generatePdf(
+            rows,
+            mapping,
+            { cols: 1, rows: 1 },
+            {
+                deduplicateAvs: false,
+                skipInvalidRows: true,
+            }
+        )
 
         expect(mockAddPage).toHaveBeenCalledTimes(2)
     })
@@ -337,15 +390,22 @@ describe('useQrPdf.generateAndDownload', () => {
         const { useQrPdf } = await import('./useQrPdf')
         const { generateAndDownload } = useQrPdf()
 
-        const rows = [
-            { name: 'Doe', avs_number: '756.1234.5678.97' },
-        ]
-        const mapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
+        const rows = [{ name: 'Doe', avs_number: '756.1234.5678.97' }]
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
 
-        const result = await generateAndDownload(rows, mapping, { cols: 2, rows: 5 }, {
-            deduplicateAvs: false,
-            skipInvalidRows: true,
-        })
+        const result = await generateAndDownload(
+            rows,
+            mapping,
+            { cols: 2, rows: 5 },
+            {
+                deduplicateAvs: false,
+                skipInvalidRows: true,
+            }
+        )
 
         expect(result.printed).toBe(1)
         expect(mockCreateObjectURL).toHaveBeenCalled()
@@ -370,9 +430,21 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Zoller', firstname: 'Anna', avs_number: '756.0001.0000.01' },
-            { name: 'Aebischer', firstname: 'Marc', avs_number: '756.0001.0000.02' },
-            { name: 'Müller', firstname: 'Sara', avs_number: '756.0001.0000.03' },
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0001.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0001.0000.02',
+            },
+            {
+                name: 'Müller',
+                firstname: 'Sara',
+                avs_number: '756.0001.0000.03',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -382,7 +454,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Zoller', 'Aebischer', 'Müller'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer', 'Müller'].includes(n)
+        )
         expect(lastNames).toEqual(['Aebischer', 'Müller', 'Zoller'])
     })
 
@@ -391,8 +465,16 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Zoller', firstname: 'Anna', avs_number: '756.0002.0000.01' },
-            { name: 'Aebischer', firstname: 'Marc', avs_number: '756.0002.0000.02' },
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0002.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0002.0000.02',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -401,7 +483,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Zoller', 'Aebischer'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer'].includes(n)
+        )
         expect(lastNames).toEqual(['Aebischer', 'Zoller'])
     })
 
@@ -410,9 +494,21 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Dupont', firstname: 'Marc', avs_number: '756.0003.0000.01' },
-            { name: 'Dupont', firstname: 'Alice', avs_number: '756.0003.0000.02' },
-            { name: 'Dupont', firstname: 'Marc', avs_number: '756.0003.0000.03' },
+            {
+                name: 'Dupont',
+                firstname: 'Marc',
+                avs_number: '756.0003.0000.01',
+            },
+            {
+                name: 'Dupont',
+                firstname: 'Alice',
+                avs_number: '756.0003.0000.02',
+            },
+            {
+                name: 'Dupont',
+                firstname: 'Marc',
+                avs_number: '756.0003.0000.03',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -426,7 +522,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         expect(firstNames[0]).toBe('Alice')
         expect(firstNames[1]).toBe('Marc')
         expect(firstNames[2]).toBe('Marc')
-        const marcIndices = firstNames.map((n, i) => (n === 'Marc' ? i : -1)).filter((i) => i >= 0)
+        const marcIndices = firstNames
+            .map((n, i) => (n === 'Marc' ? i : -1))
+            .filter((i) => i >= 0)
         expect(marcIndices[0]).toBeLessThan(marcIndices[1])
     })
 
@@ -437,7 +535,11 @@ describe('useQrPdf.generatePdf sorting', () => {
         const rows = [
             { name: 'Smith', firstname: 'Zoé', avs_number: '756.0004.0000.01' },
             { name: 'Doe', firstname: 'Alice', avs_number: '756.0004.0000.02' },
-            { name: 'Brown', firstname: 'Marc', avs_number: '756.0004.0000.03' },
+            {
+                name: 'Brown',
+                firstname: 'Marc',
+                avs_number: '756.0004.0000.03',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -447,7 +549,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const firstNames = names.filter((n) => ['Zoé', 'Alice', 'Marc'].includes(n))
+        const firstNames = names.filter((n) =>
+            ['Zoé', 'Alice', 'Marc'].includes(n)
+        )
         expect(firstNames).toEqual(['Alice', 'Marc', 'Zoé'])
     })
 
@@ -456,8 +560,16 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Zoller', firstname: 'Anna', avs_number: '756.0005.0000.01' },
-            { name: 'Aebischer', firstname: 'Anna', avs_number: '756.0005.0000.02' },
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0005.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Anna',
+                avs_number: '756.0005.0000.02',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -467,7 +579,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Zoller', 'Aebischer'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer'].includes(n)
+        )
         expect(lastNames).toEqual(['Aebischer', 'Zoller'])
     })
 
@@ -476,9 +590,21 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Zoller', firstname: 'Anna', avs_number: '756.0006.0000.01' },
-            { name: 'Aebischer', firstname: 'Marc', avs_number: '756.0006.0000.02' },
-            { name: 'Müller', firstname: 'Sara', avs_number: '756.0006.0000.03' },
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0006.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0006.0000.02',
+            },
+            {
+                name: 'Müller',
+                firstname: 'Sara',
+                avs_number: '756.0006.0000.03',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -488,7 +614,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Zoller', 'Aebischer', 'Müller'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer', 'Müller'].includes(n)
+        )
         expect(lastNames).toEqual(['Zoller', 'Aebischer', 'Müller'])
     })
 
@@ -500,7 +628,11 @@ describe('useQrPdf.generatePdf sorting', () => {
             { name: 'Zoller', avs_number: '756.0007.0000.01' },
             { name: 'Aebischer', avs_number: '756.0007.0000.02' },
         ]
-        const noFirstnameMapping = { name: 'name', firstname: null, avs_number: 'avs_number' }
+        const noFirstnameMapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
 
         await generatePdf(rows, noFirstnameMapping, config, {
             deduplicateAvs: false,
@@ -509,7 +641,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Zoller', 'Aebischer'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer'].includes(n)
+        )
         expect(lastNames).toEqual(['Aebischer', 'Zoller'])
     })
 
@@ -518,9 +652,21 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Étienne', firstname: 'Paul', avs_number: '756.0008.0000.01' },
-            { name: 'Dubois', firstname: 'Claire', avs_number: '756.0008.0000.02' },
-            { name: 'Çelik', firstname: 'Deniz', avs_number: '756.0008.0000.03' },
+            {
+                name: 'Étienne',
+                firstname: 'Paul',
+                avs_number: '756.0008.0000.01',
+            },
+            {
+                name: 'Dubois',
+                firstname: 'Claire',
+                avs_number: '756.0008.0000.02',
+            },
+            {
+                name: 'Çelik',
+                firstname: 'Deniz',
+                avs_number: '756.0008.0000.03',
+            },
         ]
 
         await generatePdf(rows, mapping, config, {
@@ -530,7 +676,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         })
 
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Étienne', 'Dubois', 'Çelik'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Étienne', 'Dubois', 'Çelik'].includes(n)
+        )
         expect(lastNames).toEqual(['Çelik', 'Dubois', 'Étienne'])
     })
 
@@ -539,9 +687,21 @@ describe('useQrPdf.generatePdf sorting', () => {
         const { generatePdf } = useQrPdf()
 
         const rows = [
-            { name: 'Zoller', firstname: 'Anna', avs_number: '756.0009.0000.01' },
-            { name: 'ZollerDup', firstname: 'Anna', avs_number: '756.0009.0000.01' },
-            { name: 'Aebischer', firstname: 'Marc', avs_number: '756.0009.0000.02' },
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0009.0000.01',
+            },
+            {
+                name: 'ZollerDup',
+                firstname: 'Anna',
+                avs_number: '756.0009.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0009.0000.02',
+            },
         ]
 
         const result = await generatePdf(rows, mapping, config, {
@@ -553,7 +713,9 @@ describe('useQrPdf.generatePdf sorting', () => {
         expect(result.summary.printed).toBe(2)
         expect(result.summary.duplicatesSkipped).toBe(1)
         const names = renderedNames()
-        const lastNames = names.filter((n) => ['Zoller', 'ZollerDup', 'Aebischer'].includes(n))
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'ZollerDup', 'Aebischer'].includes(n)
+        )
         expect(lastNames).toEqual(['Aebischer', 'Zoller'])
     })
 })

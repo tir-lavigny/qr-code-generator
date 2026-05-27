@@ -4,7 +4,11 @@ import { useQrPdf } from '@/composables/useQrPdf'
 import { totalPages } from '@/composables/useQrPdf'
 import type { ColumnMapping, GridConfig, ParsedRow } from '@/types/csv'
 import { DEFAULT_GRID_CONFIG } from '@/types/csv'
-import type { GenerateOptions, GenerateSummary, SortBy } from '@/composables/useQrPdf'
+import type {
+    GenerateOptions,
+    GenerateSummary,
+    SortBy,
+} from '@/composables/useQrPdf'
 import { DEFAULT_GENERATE_OPTIONS } from '@/composables/useQrPdf'
 import {
     Card,
@@ -33,10 +37,7 @@ import {
     NumberFieldInput,
 } from '@/components/ui/number-field'
 import { toast } from 'vue-sonner'
-import {
-    TriangleAlertIcon,
-    FileDownIcon,
-} from 'lucide-vue-next'
+import { TriangleAlertIcon, FileDownIcon } from 'lucide-vue-next'
 import { Checkbox } from '@/components/ui/checkbox'
 
 const props = defineProps<{
@@ -346,9 +347,7 @@ const NONE_VALUE = '__none__'
                 >
                     <FileDownIcon class="mr-2 size-4" />
                     {{
-                        isGenerating
-                            ? 'Génération en cours…'
-                            : 'Générer le PDF'
+                        isGenerating ? 'Génération en cours…' : 'Générer le PDF'
                     }}
                 </Button>
 

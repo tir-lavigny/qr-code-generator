@@ -16,7 +16,12 @@ import {
 } from '@/components/ui/stepper'
 import type { ColumnMapping, ParsedRow } from '@/types/csv'
 import type { GenerateSummary } from '@/composables/useQrPdf'
-import { UploadIcon, TableIcon, SlidersHorizontalIcon, EyeIcon } from 'lucide-vue-next'
+import {
+    UploadIcon,
+    TableIcon,
+    SlidersHorizontalIcon,
+    EyeIcon,
+} from 'lucide-vue-next'
 
 type Step = 'upload' | 'sheet' | 'map' | 'preview'
 
