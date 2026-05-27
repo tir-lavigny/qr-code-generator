@@ -32,14 +32,18 @@ async function generateQrDataUrl(text: string): Promise<string> {
     })
 }
 
+export type SortBy = 'none' | 'name' | 'firstname'
+
 export interface GenerateOptions {
     deduplicateAvs: boolean
     skipInvalidRows: boolean
+    sortBy?: SortBy
 }
 
 export const DEFAULT_GENERATE_OPTIONS: GenerateOptions = {
     deduplicateAvs: true,
     skipInvalidRows: true,
+    sortBy: 'name',
 }
 
 export interface GenerateSummary {
@@ -83,9 +87,17 @@ export function useQrPdf() {
         })
 
         const seenAvs = new Set<string>()
-        let cardIndex = 0
         let duplicatesSkipped = 0
         let invalidSkipped = 0
+
+        type ValidRow = {
+            row: ParsedRow
+            avsValue: string
+            nameValue: string
+            firstnameValue: string
+            originalIndex: number
+        }
+        const validRows: ValidRow[] = []
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
@@ -99,7 +111,6 @@ export function useQrPdf() {
                 if (options.skipInvalidRows) {
                     invalidSkipped++
                     skippedCount.value++
-                    progress.value = Math.round(((i + 1) / rows.length) * 100)
                     continue
                 } else {
                     throw new Error(
@@ -112,12 +123,61 @@ export function useQrPdf() {
                 if (seenAvs.has(avsValue)) {
                     duplicatesSkipped++
                     skippedCount.value++
-                    progress.value = Math.round(((i + 1) / rows.length) * 100)
                     continue
                 }
                 seenAvs.add(avsValue)
             }
 
+            validRows.push({
+                row,
+                avsValue,
+                nameValue,
+                firstnameValue,
+                originalIndex: i,
+            })
+        }
+
+        const sortBy = options.sortBy ?? 'name'
+        const effectiveSortBy =
+            sortBy === 'firstname' && !mapping.firstname ? 'name' : sortBy
+
+        if (effectiveSortBy === 'name') {
+            validRows.sort((a, b) => {
+                const nameCmp = a.nameValue.localeCompare(
+                    b.nameValue,
+                    undefined,
+                    { sensitivity: 'base' }
+                )
+                if (nameCmp !== 0) return nameCmp
+                const firstnameCmp = a.firstnameValue.localeCompare(
+                    b.firstnameValue,
+                    undefined,
+                    { sensitivity: 'base' }
+                )
+                if (firstnameCmp !== 0) return firstnameCmp
+                return a.originalIndex - b.originalIndex
+            })
+        } else if (effectiveSortBy === 'firstname') {
+            validRows.sort((a, b) => {
+                const firstnameCmp = a.firstnameValue.localeCompare(
+                    b.firstnameValue,
+                    undefined,
+                    { sensitivity: 'base' }
+                )
+                if (firstnameCmp !== 0) return firstnameCmp
+                const nameCmp = a.nameValue.localeCompare(
+                    b.nameValue,
+                    undefined,
+                    { sensitivity: 'base' }
+                )
+                if (nameCmp !== 0) return nameCmp
+                return a.originalIndex - b.originalIndex
+            })
+        }
+
+        let cardIndex = 0
+
+        for (const { avsValue, nameValue, firstnameValue } of validRows) {
             const posInPage = cardIndex % perPage
             if (cardIndex > 0 && posInPage === 0) {
                 doc.addPage()
@@ -169,7 +229,7 @@ export function useQrPdf() {
             doc.rect(xCard, yCard, cardWidth, cardHeight)
 
             cardIndex++
-            progress.value = Math.round(((i + 1) / rows.length) * 100)
+            progress.value = Math.round((cardIndex / validRows.length) * 100)
         }
 
         if (cardIndex === 0) {

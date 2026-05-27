@@ -12,7 +12,7 @@
         "test": "vitest",
         "test:coverage": "vitest run --coverage",
         "format": "prettier --write .",
-        "tsc": "vue-tsc --noEmit -p tsconfig.json"
+        "tsc": "vue-tsc -b --noEmit"
     },
     "dependencies": {
         "@tanstack/vue-table": "^8.21.3",
