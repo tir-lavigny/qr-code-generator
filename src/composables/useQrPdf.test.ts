@@ -1,13 +1,15 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
     computeCardDimensions,
     totalPages,
     DEFAULT_GENERATE_OPTIONS,
+    downloadPdf,
 } from './useQrPdf'
 import type { GridConfig } from '@/types/csv'
 
 const {
-    mockSave,
+    mockOutput,
     mockAddImage,
     mockAddPage,
     mockText,
@@ -17,7 +19,9 @@ const {
     mockSetDrawColor,
     mockGetTextWidth,
 } = vi.hoisted(() => ({
-    mockSave: vi.fn(),
+    mockOutput: vi
+        .fn()
+        .mockReturnValue(new Blob(['fake'], { type: 'application/pdf' })),
     mockAddImage: vi.fn(),
     mockAddPage: vi.fn(),
     mockText: vi.fn(),
@@ -37,7 +41,7 @@ vi.mock('jspdf', () => {
         setFontSize: mockSetFontSize,
         setFont: mockSetFont,
         setDrawColor: mockSetDrawColor,
-        save: mockSave,
+        output: mockOutput,
         getTextWidth: mockGetTextWidth,
     }
     return {
@@ -53,9 +57,31 @@ vi.mock('qrcode', () => ({
     },
 }))
 
+const mockClick = vi.fn()
+const mockCreateObjectURL = vi.fn().mockReturnValue('blob:fake-url')
+const mockRevokeObjectURL = vi.fn()
+
 beforeEach(() => {
     vi.clearAllMocks()
     mockGetTextWidth.mockReturnValue(10)
+    mockOutput.mockReturnValue(new Blob(['fake'], { type: 'application/pdf' }))
+    mockCreateObjectURL.mockReturnValue('blob:fake-url')
+
+    vi.stubGlobal('URL', {
+        createObjectURL: mockCreateObjectURL,
+        revokeObjectURL: mockRevokeObjectURL,
+    })
+
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        if (tag === 'a') {
+            return {
+                href: '',
+                download: '',
+                click: mockClick,
+            } as unknown as HTMLElement
+        }
+        return document.createElement(tag)
+    })
 })
 
 describe('computeCardDimensions', () => {
@@ -103,13 +129,83 @@ describe('totalPages', () => {
     })
 })
 
-describe('useQrPdf.generateAndDownload', () => {
+describe('downloadPdf', () => {
+    it('creates an object URL from the blob and triggers a link click', () => {
+        const blob = new Blob(['pdf'], { type: 'application/pdf' })
+        downloadPdf(blob, 'test.pdf')
+
+        expect(mockCreateObjectURL).toHaveBeenCalledWith(blob)
+        expect(mockClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('sets the correct download filename on the anchor', () => {
+        const blob = new Blob(['pdf'], { type: 'application/pdf' })
+        let capturedAnchor: {
+            href: string
+            download: string
+            click: () => void
+        } | null = null
+        vi.spyOn(document, 'createElement').mockImplementation(
+            (tag: string) => {
+                if (tag === 'a') {
+                    capturedAnchor = {
+                        href: '',
+                        download: '',
+                        click: mockClick,
+                    }
+                    return capturedAnchor as unknown as HTMLElement
+                }
+                return document.createElement(tag)
+            }
+        )
+
+        downloadPdf(blob, 'my-file.pdf')
+
+        expect(capturedAnchor!.download).toBe('my-file.pdf')
+        expect(capturedAnchor!.href).toBe('blob:fake-url')
+    })
+
+    it('revokes the object URL after clicking', () => {
+        const blob = new Blob(['pdf'], { type: 'application/pdf' })
+        downloadPdf(blob, 'test.pdf')
+
+        expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:fake-url')
+    })
+
+    it('uses qr-codes.pdf as the default filename', () => {
+        const blob = new Blob(['pdf'], { type: 'application/pdf' })
+        let capturedAnchor: {
+            href: string
+            download: string
+            click: () => void
+        } | null = null
+        vi.spyOn(document, 'createElement').mockImplementation(
+            (tag: string) => {
+                if (tag === 'a') {
+                    capturedAnchor = {
+                        href: '',
+                        download: '',
+                        click: mockClick,
+                    }
+                    return capturedAnchor as unknown as HTMLElement
+                }
+                return document.createElement(tag)
+            }
+        )
+
+        downloadPdf(blob)
+
+        expect(capturedAnchor!.download).toBe('qr-codes.pdf')
+    })
+})
+
+describe('useQrPdf.generatePdf', () => {
     it('throws when name mapping is missing', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         await expect(
-            generateAndDownload(
+            generatePdf(
                 [{ avs_number: '756.1234.5678.90' }],
                 { name: null, firstname: null, avs_number: 'avs_number' },
                 { cols: 2, rows: 5 }
@@ -119,10 +215,10 @@ describe('useQrPdf.generateAndDownload', () => {
 
     it('throws when avs_number mapping is missing', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         await expect(
-            generateAndDownload(
+            generatePdf(
                 [{ name: 'Doe' }],
                 { name: 'name', firstname: null, avs_number: null },
                 { cols: 2, rows: 5 }
@@ -139,10 +235,10 @@ describe('useQrPdf.generateAndDownload', () => {
 
     it('throws on missing required row data when skipInvalidRows is false', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         await expect(
-            generateAndDownload(
+            generatePdf(
                 [{ name: '', avs_number: '' }],
                 { name: 'name', firstname: null, avs_number: 'avs_number' },
                 { cols: 2, rows: 5 },
@@ -153,10 +249,10 @@ describe('useQrPdf.generateAndDownload', () => {
 
     it('skips invalid rows when skipInvalidRows is true and throws if all skipped', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload, skippedCount } = useQrPdf()
+        const { generatePdf, skippedCount } = useQrPdf()
 
         await expect(
-            generateAndDownload(
+            generatePdf(
                 [{ name: '', avs_number: '' }],
                 { name: 'name', firstname: null, avs_number: 'avs_number' },
                 { cols: 2, rows: 5 },
@@ -173,10 +269,9 @@ describe('useQrPdf.generateAndDownload', () => {
         expect(DEFAULT_GENERATE_OPTIONS.sortBy).toBe('name')
     })
 
-    it('generates PDF and returns summary for valid rows', async () => {
+    it('returns a blob and correct summary for valid rows', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload, progress, isGenerating, summary } =
-            useQrPdf()
+        const { generatePdf, progress, isGenerating, summary } = useQrPdf()
 
         const rows = [
             { name: 'Doe', firstname: 'Jane', avs_number: '756.1234.5678.97' },
@@ -193,28 +288,29 @@ describe('useQrPdf.generateAndDownload', () => {
         }
         const config: GridConfig = { cols: 2, rows: 5 }
 
-        const result = await generateAndDownload(rows, mapping, config, {
+        const result = await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
         })
 
-        expect(result.total).toBe(2)
-        expect(result.printed).toBe(2)
-        expect(result.duplicatesSkipped).toBe(0)
-        expect(result.invalidSkipped).toBe(0)
-        expect(mockSave).toHaveBeenCalledWith('qr-codes.pdf')
+        expect(result.summary.total).toBe(2)
+        expect(result.summary.printed).toBe(2)
+        expect(result.summary.duplicatesSkipped).toBe(0)
+        expect(result.summary.invalidSkipped).toBe(0)
+        expect(result.blob).toBeInstanceOf(Blob)
+        expect(mockOutput).toHaveBeenCalledWith('blob')
         expect(mockAddImage).toHaveBeenCalledTimes(2)
         expect(progress.value).toBe(100)
         expect(isGenerating.value).toBe(false)
-        expect(summary.value).toEqual(result)
+        expect(summary.value).toEqual(result.summary)
     })
 
     it('shrinks font size when a name is too wide for the text area', async () => {
         mockGetTextWidth.mockReturnValue(999)
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
-        await generateAndDownload(
+        await generatePdf(
             [
                 {
                     name: 'VeryLongLastNameThatOverflows',
@@ -232,7 +328,7 @@ describe('useQrPdf.generateAndDownload', () => {
 
     it('deduplicates AVS numbers when deduplicateAvs is true', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             { name: 'Doe', avs_number: '756.1234.5678.97' },
@@ -245,7 +341,7 @@ describe('useQrPdf.generateAndDownload', () => {
             avs_number: 'avs_number',
         }
 
-        const result = await generateAndDownload(
+        const result = await generatePdf(
             rows,
             mapping,
             { cols: 2, rows: 5 },
@@ -255,15 +351,15 @@ describe('useQrPdf.generateAndDownload', () => {
             }
         )
 
-        expect(result.total).toBe(3)
-        expect(result.printed).toBe(2)
-        expect(result.duplicatesSkipped).toBe(1)
+        expect(result.summary.total).toBe(3)
+        expect(result.summary.printed).toBe(2)
+        expect(result.summary.duplicatesSkipped).toBe(1)
         expect(mockAddImage).toHaveBeenCalledTimes(2)
     })
 
     it('adds a new page when cards exceed perPage', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = Array.from({ length: 3 }, (_, i) => ({
             name: `Name${i}`,
@@ -275,7 +371,7 @@ describe('useQrPdf.generateAndDownload', () => {
             avs_number: 'avs_number',
         }
 
-        await generateAndDownload(
+        await generatePdf(
             rows,
             mapping,
             { cols: 1, rows: 1 },
@@ -289,7 +385,35 @@ describe('useQrPdf.generateAndDownload', () => {
     })
 })
 
-describe('useQrPdf.generateAndDownload sorting', () => {
+describe('useQrPdf.generateAndDownload', () => {
+    it('calls downloadPdf and returns summary', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [{ name: 'Doe', avs_number: '756.1234.5678.97' }]
+        const mapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
+
+        const result = await generateAndDownload(
+            rows,
+            mapping,
+            { cols: 2, rows: 5 },
+            {
+                deduplicateAvs: false,
+                skipInvalidRows: true,
+            }
+        )
+
+        expect(result.printed).toBe(1)
+        expect(mockCreateObjectURL).toHaveBeenCalled()
+        expect(mockClick).toHaveBeenCalled()
+    })
+})
+
+describe('useQrPdf.generatePdf sorting', () => {
     const mapping = {
         name: 'name',
         firstname: 'firstname',
@@ -303,7 +427,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('sorts by last name A→Z by default', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -323,7 +447,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'name',
@@ -338,7 +462,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('sorts by last name by default when sortBy is omitted', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -353,7 +477,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
         })
@@ -367,7 +491,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('tie-breaks last name sort by firstname then original order', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -387,7 +511,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'name',
@@ -406,7 +530,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('sorts by firstname A→Z when sortBy is firstname', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             { name: 'Smith', firstname: 'Zoé', avs_number: '756.0004.0000.01' },
@@ -418,7 +542,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'firstname',
@@ -433,7 +557,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('tie-breaks firstname sort by lastname', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -448,7 +572,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'firstname',
@@ -463,7 +587,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('preserves original order when sortBy is none', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -483,7 +607,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'none',
@@ -498,7 +622,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('falls back to lastname sort when sortBy is firstname but no firstname column is mapped', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             { name: 'Zoller', avs_number: '756.0007.0000.01' },
@@ -510,7 +634,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             avs_number: 'avs_number',
         }
 
-        await generateAndDownload(rows, noFirstnameMapping, config, {
+        await generatePdf(rows, noFirstnameMapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'firstname',
@@ -525,7 +649,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('sorts with locale-sensitive comparison for accented names', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -545,7 +669,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        await generateAndDownload(rows, mapping, config, {
+        await generatePdf(rows, mapping, config, {
             deduplicateAvs: false,
             skipInvalidRows: true,
             sortBy: 'name',
@@ -560,7 +684,7 @@ describe('useQrPdf.generateAndDownload sorting', () => {
 
     it('deduplicates before sorting', async () => {
         const { useQrPdf } = await import('./useQrPdf')
-        const { generateAndDownload } = useQrPdf()
+        const { generatePdf } = useQrPdf()
 
         const rows = [
             {
@@ -580,14 +704,14 @@ describe('useQrPdf.generateAndDownload sorting', () => {
             },
         ]
 
-        const result = await generateAndDownload(rows, mapping, config, {
+        const result = await generatePdf(rows, mapping, config, {
             deduplicateAvs: true,
             skipInvalidRows: true,
             sortBy: 'name',
         })
 
-        expect(result.printed).toBe(2)
-        expect(result.duplicatesSkipped).toBe(1)
+        expect(result.summary.printed).toBe(2)
+        expect(result.summary.duplicatesSkipped).toBe(1)
         const names = renderedNames()
         const lastNames = names.filter((n) =>
             ['Zoller', 'ZollerDup', 'Aebischer'].includes(n)

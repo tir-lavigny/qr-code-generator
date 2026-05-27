@@ -3,7 +3,6 @@ import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import type { ColumnMapping, GridConfig, ParsedRow } from '@/types/csv'
 
-// A4 dimensions en mm
 const PAGE_WIDTH = 210
 const PAGE_HEIGHT = 297
 const PAGE_MARGIN = 10
@@ -53,19 +52,32 @@ export interface GenerateSummary {
     invalidSkipped: number
 }
 
+export interface GeneratePdfResult {
+    summary: GenerateSummary
+    blob: Blob
+}
+
+export function downloadPdf(blob: Blob, filename = 'qr-codes.pdf'): void {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+}
+
 export function useQrPdf() {
     const progress = ref(0)
     const isGenerating = ref(false)
     const skippedCount = ref(0)
     const summary = ref<GenerateSummary | null>(null)
 
-    async function generateAndDownload(
+    async function generatePdf(
         rows: ParsedRow[],
         mapping: ColumnMapping,
         config: GridConfig,
-        options: GenerateOptions = DEFAULT_GENERATE_OPTIONS,
-        filename = 'qr-codes.pdf'
-    ): Promise<GenerateSummary> {
+        options: GenerateOptions = DEFAULT_GENERATE_OPTIONS
+    ): Promise<GeneratePdfResult> {
         if (!mapping.avs_number || !mapping.name) {
             throw new Error(
                 'Le mapping des colonnes « nom » et « numéro AVS » est requis.'
@@ -238,7 +250,6 @@ export function useQrPdf() {
             )
         }
 
-        doc.save(filename)
         isGenerating.value = false
 
         const result: GenerateSummary = {
@@ -248,6 +259,25 @@ export function useQrPdf() {
             invalidSkipped,
         }
         summary.value = result
+
+        const blob = doc.output('blob')
+        return { summary: result, blob }
+    }
+
+    async function generateAndDownload(
+        rows: ParsedRow[],
+        mapping: ColumnMapping,
+        config: GridConfig,
+        options: GenerateOptions = DEFAULT_GENERATE_OPTIONS,
+        filename = 'qr-codes.pdf'
+    ): Promise<GenerateSummary> {
+        const { summary: result, blob } = await generatePdf(
+            rows,
+            mapping,
+            config,
+            options
+        )
+        downloadPdf(blob, filename)
         return result
     }
 
@@ -256,6 +286,7 @@ export function useQrPdf() {
         isGenerating,
         skippedCount,
         summary,
+        generatePdf,
         generateAndDownload,
     }
 }

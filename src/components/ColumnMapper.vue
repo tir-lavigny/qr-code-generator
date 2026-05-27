@@ -4,7 +4,11 @@ import { useQrPdf } from '@/composables/useQrPdf'
 import { totalPages } from '@/composables/useQrPdf'
 import type { ColumnMapping, GridConfig, ParsedRow } from '@/types/csv'
 import { DEFAULT_GRID_CONFIG } from '@/types/csv'
-import type { GenerateOptions, SortBy } from '@/composables/useQrPdf'
+import type {
+    GenerateOptions,
+    GenerateSummary,
+    SortBy,
+} from '@/composables/useQrPdf'
 import { DEFAULT_GENERATE_OPTIONS } from '@/composables/useQrPdf'
 import {
     Card,
@@ -33,17 +37,17 @@ import {
     NumberFieldInput,
 } from '@/components/ui/number-field'
 import { toast } from 'vue-sonner'
-import {
-    TriangleAlertIcon,
-    FileDownIcon,
-    CheckCircleIcon,
-} from 'lucide-vue-next'
+import { TriangleAlertIcon, FileDownIcon } from 'lucide-vue-next'
 import { Checkbox } from '@/components/ui/checkbox'
 
 const props = defineProps<{
     headers: string[]
     rows: ParsedRow[]
     initialMapping: ColumnMapping
+}>()
+
+const emit = defineEmits<{
+    generated: [{ blob: Blob; summary: GenerateSummary }]
 }>()
 
 const mappingName = ref<string>(props.initialMapping.name ?? '')
@@ -90,7 +94,7 @@ const pageCount = computed(() =>
     totalPages(props.rows.length, gridConfig.value)
 )
 
-const { progress, isGenerating, summary, generateAndDownload } = useQrPdf()
+const { progress, isGenerating, generatePdf } = useQrPdf()
 
 const deduplicateAvs = ref(DEFAULT_GENERATE_OPTIONS.deduplicateAvs)
 const skipInvalidRows = ref(DEFAULT_GENERATE_OPTIONS.skipInvalidRows)
@@ -114,13 +118,13 @@ const generateOptions = computed<GenerateOptions>(() => ({
 async function onGenerate() {
     if (!isValid.value) return
     try {
-        await generateAndDownload(
+        const result = await generatePdf(
             props.rows,
             mapping.value,
             gridConfig.value,
             generateOptions.value
         )
-        toast.success('PDF téléchargé avec succès !')
+        emit('generated', result)
     } catch (err) {
         toast.error('Échec de la génération du PDF', {
             description: err instanceof Error ? err.message : String(err),
@@ -343,9 +347,7 @@ const NONE_VALUE = '__none__'
                 >
                     <FileDownIcon class="mr-2 size-4" />
                     {{
-                        isGenerating
-                            ? 'Génération en cours…'
-                            : 'Générer et télécharger le PDF'
+                        isGenerating ? 'Génération en cours…' : 'Générer le PDF'
                     }}
                 </Button>
 
@@ -354,51 +356,6 @@ const NONE_VALUE = '__none__'
                     :model-value="progress"
                     class="h-2"
                 />
-
-                <div
-                    v-if="summary && !isGenerating"
-                    class="bg-muted rounded-lg border p-4 text-sm"
-                >
-                    <div class="mb-2 flex items-center gap-2 font-medium">
-                        <CheckCircleIcon class="text-primary size-4" />
-                        Génération terminée
-                    </div>
-                    <ul class="text-muted-foreground space-y-1">
-                        <li>
-                            <span class="text-foreground font-medium">{{
-                                summary.total
-                            }}</span>
-                            lignes dans le CSV
-                        </li>
-                        <li>
-                            <span class="text-foreground font-medium">{{
-                                summary.printed
-                            }}</span>
-                            QR codes générés
-                        </li>
-                        <li v-if="summary.duplicatesSkipped > 0">
-                            <span class="text-foreground font-medium">{{
-                                summary.duplicatesSkipped
-                            }}</span>
-                            numéro{{
-                                summary.duplicatesSkipped > 1 ? 's' : ''
-                            }}
-                            AVS en doublon ignoré{{
-                                summary.duplicatesSkipped > 1 ? 's' : ''
-                            }}
-                        </li>
-                        <li v-if="summary.invalidSkipped > 0">
-                            <span class="text-foreground font-medium">{{
-                                summary.invalidSkipped
-                            }}</span>
-                            ligne{{
-                                summary.invalidSkipped > 1 ? 's' : ''
-                            }}
-                            ignorée{{ summary.invalidSkipped > 1 ? 's' : '' }}
-                            (données manquantes)
-                        </li>
-                    </ul>
-                </div>
             </div>
         </CardContent>
     </Card>
