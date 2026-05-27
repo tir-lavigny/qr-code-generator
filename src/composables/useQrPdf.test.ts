@@ -167,9 +167,10 @@ describe('useQrPdf.generateAndDownload', () => {
         expect(skippedCount.value).toBe(1)
     })
 
-    it('DEFAULT_GENERATE_OPTIONS has deduplicateAvs=true and skipInvalidRows=true', () => {
+    it('DEFAULT_GENERATE_OPTIONS has deduplicateAvs=true, skipInvalidRows=true, sortBy=name', () => {
         expect(DEFAULT_GENERATE_OPTIONS.deduplicateAvs).toBe(true)
         expect(DEFAULT_GENERATE_OPTIONS.skipInvalidRows).toBe(true)
+        expect(DEFAULT_GENERATE_OPTIONS.sortBy).toBe('name')
     })
 
     it('generates PDF and returns summary for valid rows', async () => {
@@ -285,5 +286,312 @@ describe('useQrPdf.generateAndDownload', () => {
         )
 
         expect(mockAddPage).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe('useQrPdf.generateAndDownload sorting', () => {
+    const mapping = {
+        name: 'name',
+        firstname: 'firstname',
+        avs_number: 'avs_number',
+    }
+    const config: GridConfig = { cols: 2, rows: 5 }
+
+    function renderedNames(): string[] {
+        return mockText.mock.calls.map((c) => c[0] as string)
+    }
+
+    it('sorts by last name A→Z by default', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0001.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0001.0000.02',
+            },
+            {
+                name: 'Müller',
+                firstname: 'Sara',
+                avs_number: '756.0001.0000.03',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'name',
+        })
+
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer', 'Müller'].includes(n)
+        )
+        expect(lastNames).toEqual(['Aebischer', 'Müller', 'Zoller'])
+    })
+
+    it('sorts by last name by default when sortBy is omitted', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0002.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0002.0000.02',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+        })
+
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer'].includes(n)
+        )
+        expect(lastNames).toEqual(['Aebischer', 'Zoller'])
+    })
+
+    it('tie-breaks last name sort by firstname then original order', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Dupont',
+                firstname: 'Marc',
+                avs_number: '756.0003.0000.01',
+            },
+            {
+                name: 'Dupont',
+                firstname: 'Alice',
+                avs_number: '756.0003.0000.02',
+            },
+            {
+                name: 'Dupont',
+                firstname: 'Marc',
+                avs_number: '756.0003.0000.03',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'name',
+        })
+
+        const names = renderedNames()
+        const firstNames = names.filter((n) => ['Marc', 'Alice'].includes(n))
+        expect(firstNames[0]).toBe('Alice')
+        expect(firstNames[1]).toBe('Marc')
+        expect(firstNames[2]).toBe('Marc')
+        const marcIndices = firstNames
+            .map((n, i) => (n === 'Marc' ? i : -1))
+            .filter((i) => i >= 0)
+        expect(marcIndices[0]).toBeLessThan(marcIndices[1])
+    })
+
+    it('sorts by firstname A→Z when sortBy is firstname', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            { name: 'Smith', firstname: 'Zoé', avs_number: '756.0004.0000.01' },
+            { name: 'Doe', firstname: 'Alice', avs_number: '756.0004.0000.02' },
+            {
+                name: 'Brown',
+                firstname: 'Marc',
+                avs_number: '756.0004.0000.03',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'firstname',
+        })
+
+        const names = renderedNames()
+        const firstNames = names.filter((n) =>
+            ['Zoé', 'Alice', 'Marc'].includes(n)
+        )
+        expect(firstNames).toEqual(['Alice', 'Marc', 'Zoé'])
+    })
+
+    it('tie-breaks firstname sort by lastname', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0005.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Anna',
+                avs_number: '756.0005.0000.02',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'firstname',
+        })
+
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer'].includes(n)
+        )
+        expect(lastNames).toEqual(['Aebischer', 'Zoller'])
+    })
+
+    it('preserves original order when sortBy is none', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0006.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0006.0000.02',
+            },
+            {
+                name: 'Müller',
+                firstname: 'Sara',
+                avs_number: '756.0006.0000.03',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'none',
+        })
+
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer', 'Müller'].includes(n)
+        )
+        expect(lastNames).toEqual(['Zoller', 'Aebischer', 'Müller'])
+    })
+
+    it('falls back to lastname sort when sortBy is firstname but no firstname column is mapped', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            { name: 'Zoller', avs_number: '756.0007.0000.01' },
+            { name: 'Aebischer', avs_number: '756.0007.0000.02' },
+        ]
+        const noFirstnameMapping = {
+            name: 'name',
+            firstname: null,
+            avs_number: 'avs_number',
+        }
+
+        await generateAndDownload(rows, noFirstnameMapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'firstname',
+        })
+
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'Aebischer'].includes(n)
+        )
+        expect(lastNames).toEqual(['Aebischer', 'Zoller'])
+    })
+
+    it('sorts with locale-sensitive comparison for accented names', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Étienne',
+                firstname: 'Paul',
+                avs_number: '756.0008.0000.01',
+            },
+            {
+                name: 'Dubois',
+                firstname: 'Claire',
+                avs_number: '756.0008.0000.02',
+            },
+            {
+                name: 'Çelik',
+                firstname: 'Deniz',
+                avs_number: '756.0008.0000.03',
+            },
+        ]
+
+        await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: false,
+            skipInvalidRows: true,
+            sortBy: 'name',
+        })
+
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Étienne', 'Dubois', 'Çelik'].includes(n)
+        )
+        expect(lastNames).toEqual(['Çelik', 'Dubois', 'Étienne'])
+    })
+
+    it('deduplicates before sorting', async () => {
+        const { useQrPdf } = await import('./useQrPdf')
+        const { generateAndDownload } = useQrPdf()
+
+        const rows = [
+            {
+                name: 'Zoller',
+                firstname: 'Anna',
+                avs_number: '756.0009.0000.01',
+            },
+            {
+                name: 'ZollerDup',
+                firstname: 'Anna',
+                avs_number: '756.0009.0000.01',
+            },
+            {
+                name: 'Aebischer',
+                firstname: 'Marc',
+                avs_number: '756.0009.0000.02',
+            },
+        ]
+
+        const result = await generateAndDownload(rows, mapping, config, {
+            deduplicateAvs: true,
+            skipInvalidRows: true,
+            sortBy: 'name',
+        })
+
+        expect(result.printed).toBe(2)
+        expect(result.duplicatesSkipped).toBe(1)
+        const names = renderedNames()
+        const lastNames = names.filter((n) =>
+            ['Zoller', 'ZollerDup', 'Aebischer'].includes(n)
+        )
+        expect(lastNames).toEqual(['Aebischer', 'Zoller'])
     })
 })

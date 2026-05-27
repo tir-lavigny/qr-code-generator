@@ -4,7 +4,7 @@ import { useQrPdf } from '@/composables/useQrPdf'
 import { totalPages } from '@/composables/useQrPdf'
 import type { ColumnMapping, GridConfig, ParsedRow } from '@/types/csv'
 import { DEFAULT_GRID_CONFIG } from '@/types/csv'
-import type { GenerateOptions } from '@/composables/useQrPdf'
+import type { GenerateOptions, SortBy } from '@/composables/useQrPdf'
 import { DEFAULT_GENERATE_OPTIONS } from '@/composables/useQrPdf'
 import {
     Card,
@@ -94,10 +94,21 @@ const { progress, isGenerating, summary, generateAndDownload } = useQrPdf()
 
 const deduplicateAvs = ref(DEFAULT_GENERATE_OPTIONS.deduplicateAvs)
 const skipInvalidRows = ref(DEFAULT_GENERATE_OPTIONS.skipInvalidRows)
+const sortBy = ref<SortBy>(DEFAULT_GENERATE_OPTIONS.sortBy!)
+
+watch(
+    () => mappingFirstname.value,
+    (val) => {
+        if (!val && sortBy.value === 'firstname') {
+            sortBy.value = 'name'
+        }
+    }
+)
 
 const generateOptions = computed<GenerateOptions>(() => ({
     deduplicateAvs: deduplicateAvs.value,
     skipInvalidRows: skipInvalidRows.value,
+    sortBy: sortBy.value,
 }))
 
 async function onGenerate() {
@@ -289,6 +300,36 @@ const NONE_VALUE = '__none__'
                             </p>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <Separator />
+
+            <div class="space-y-3">
+                <p class="text-sm font-medium">Ordre de tri</p>
+                <div class="space-y-1.5">
+                    <Label for="sort-by">Trier par</Label>
+                    <Select v-model="sortBy">
+                        <SelectTrigger id="sort-by" class="w-56">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="name">Nom (A → Z)</SelectItem>
+                            <SelectItem
+                                value="firstname"
+                                :disabled="!mapping.firstname"
+                            >
+                                Prénom (A → Z)
+                            </SelectItem>
+                            <SelectItem value="none">Aucun tri</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p
+                        v-if="sortBy === 'firstname' && !mapping.firstname"
+                        class="text-muted-foreground text-xs"
+                    >
+                        Aucune colonne « Prénom » mappée — tri par nom appliqué.
+                    </p>
                 </div>
             </div>
 
