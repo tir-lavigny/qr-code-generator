@@ -26,7 +26,7 @@ const emit = defineEmits<{
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <button
-                class="hover:bg-accent/50 ring-border cursor-pointer rounded-xl p-0 text-left ring-1 transition-colors"
+                class="ring-border cursor-pointer rounded-xl p-0 text-left ring-1 transition-colors"
                 @click="emit('select', 'avs')"
             >
                 <Card class="border-0 shadow-none">
@@ -50,13 +50,13 @@ const emit = defineEmits<{
             </button>
 
             <button
-                class="hover:bg-accent/50 ring-border cursor-pointer rounded-xl p-0 text-left ring-1 transition-colors"
+                class="ring-border cursor-pointer rounded-xl p-0 text-left ring-1 transition-colors"
                 @click="emit('select', 'wifi')"
             >
                 <Card class="border-0 shadow-none">
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <WifiIcon class="size-5" />
+                            <WifiIcon class="text-primary size-5" />
                             QR Code WiFi
                         </CardTitle>
                         <CardDescription>
