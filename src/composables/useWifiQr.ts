@@ -101,36 +101,49 @@ export function useWifiQr() {
             }
         } else {
             const { cardWidth, cardHeight } = computeCardDimensions(grid)
-            const col = 0
-            const rowIndex = 0
+            const perPage = grid.cols * grid.rows
+            const count = Math.max(1, grid.repeatCount)
 
-            const xCard = PAGE_MARGIN + col * cardWidth
-            const yCard = PAGE_MARGIN + rowIndex * cardHeight
+            for (let i = 0; i < count; i++) {
+                const posInPage = i % perPage
+                if (i > 0 && posInPage === 0) {
+                    doc.addPage()
+                }
 
-            const qrSize = Math.min(cardHeight * 0.6, cardWidth * 0.8)
-            const qrX = xCard + (cardWidth - qrSize) / 2
-            const qrY = yCard + 5
+                const col = posInPage % grid.cols
+                const rowIndex = Math.floor(posInPage / grid.cols)
 
-            doc.addImage(dataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
+                const xCard = PAGE_MARGIN + col * cardWidth
+                const yCard = PAGE_MARGIN + rowIndex * cardHeight
 
-            doc.setFont('helvetica', 'bold')
-            doc.setFontSize(9)
-            const textY = qrY + qrSize + 4
-            doc.text(config.ssid, xCard + cardWidth / 2, textY, {
-                align: 'center',
-                maxWidth: cardWidth - 4,
-            })
+                const qrSize = Math.min(cardHeight * 0.6, cardWidth * 0.8)
+                const qrX = xCard + (cardWidth - qrSize) / 2
+                const qrY = yCard + 5
 
-            doc.setDrawColor(220, 220, 220)
-            doc.rect(xCard, yCard, cardWidth, cardHeight)
+                doc.addImage(dataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
+
+                doc.setFont('helvetica', 'bold')
+                doc.setFontSize(9)
+                const textY = qrY + qrSize + 4
+                doc.text(config.ssid, xCard + cardWidth / 2, textY, {
+                    align: 'center',
+                    maxWidth: cardWidth - 4,
+                })
+
+                doc.setDrawColor(220, 220, 220)
+                doc.rect(xCard, yCard, cardWidth, cardHeight)
+
+                progress.value = Math.round(((i + 1) / count) * 100)
+            }
         }
 
         isGenerating.value = false
         progress.value = 100
 
+        const printed = grid.mode === 'single' ? 1 : Math.max(1, grid.repeatCount)
         const summary: GenerateSummary = {
-            total: 1,
-            printed: 1,
+            total: printed,
+            printed,
             duplicatesSkipped: 0,
             invalidSkipped: 0,
         }

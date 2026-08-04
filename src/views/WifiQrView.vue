@@ -25,6 +25,7 @@ const formHidden = ref(false)
 const formLayoutMode = ref<WifiGridConfig['mode']>(DEFAULT_WIFI_GRID_CONFIG.mode)
 const formGridCols = ref(DEFAULT_WIFI_GRID_CONFIG.cols)
 const formGridRows = ref(DEFAULT_WIFI_GRID_CONFIG.rows)
+const formRepeatCount = ref(DEFAULT_WIFI_GRID_CONFIG.repeatCount)
 
 function onGenerated(data: { blob: Blob; summary: GenerateSummary }) {
     previewBlob.value = data.blob
@@ -60,6 +61,7 @@ function onGenerated(data: { blob: Blob; summary: GenerateSummary }) {
             v-model:layout-mode="formLayoutMode"
             v-model:grid-cols="formGridCols"
             v-model:grid-rows="formGridRows"
+            v-model:repeat-count="formRepeatCount"
             @generated="onGenerated"
         />
 

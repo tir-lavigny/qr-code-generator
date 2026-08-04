@@ -11,10 +11,12 @@ export interface WifiGridConfig {
     mode: 'single' | 'grid'
     cols: number
     rows: number
+    repeatCount: number
 }
 
 export const DEFAULT_WIFI_GRID_CONFIG: WifiGridConfig = {
     mode: 'single',
     cols: 2,
     rows: 5,
+    repeatCount: 1,
 }

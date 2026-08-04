@@ -177,7 +177,7 @@ describe('useWifiQr.generatePdf', () => {
         await expect(
             generatePdf(
                 { ssid: '', password: 'pass', authType: 'WPA', hidden: false },
-                { mode: 'single', cols: 2, rows: 5 }
+                { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
             )
         ).rejects.toThrow(/SSID/)
     })
@@ -189,7 +189,7 @@ describe('useWifiQr.generatePdf', () => {
         await expect(
             generatePdf(
                 { ssid: 'Net', password: '', authType: 'WPA', hidden: false },
-                { mode: 'single', cols: 2, rows: 5 }
+                { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
             )
         ).rejects.toThrow(/mot de passe/)
     })
@@ -201,7 +201,7 @@ describe('useWifiQr.generatePdf', () => {
         await expect(
             generatePdf(
                 { ssid: 'Net', password: '', authType: 'WEP', hidden: false },
-                { mode: 'single', cols: 2, rows: 5 }
+                { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
             )
         ).rejects.toThrow(/mot de passe/)
     })
@@ -212,7 +212,7 @@ describe('useWifiQr.generatePdf', () => {
 
         const result = await generatePdf(
             { ssid: 'OpenNet', password: '', authType: 'nopass', hidden: false },
-            { mode: 'single', cols: 2, rows: 5 }
+            { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
         expect(result.blob).toBeInstanceOf(Blob)
@@ -225,7 +225,7 @@ describe('useWifiQr.generatePdf', () => {
 
         const result = await generatePdf(
             { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
-            { mode: 'single', cols: 2, rows: 5 }
+            { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
         expect(result.blob).toBeInstanceOf(Blob)
@@ -240,7 +240,7 @@ describe('useWifiQr.generatePdf', () => {
 
         const result = await generatePdf(
             { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
-            { mode: 'grid', cols: 2, rows: 5 }
+            { mode: 'grid', cols: 2, rows: 5, repeatCount: 1 }
         )
 
         expect(result.blob).toBeInstanceOf(Blob)
@@ -254,7 +254,7 @@ describe('useWifiQr.generatePdf', () => {
 
         const result = await generatePdf(
             { ssid: 'MyNet', password: 'pw', authType: 'WPA', hidden: false },
-            { mode: 'single', cols: 2, rows: 5 }
+            { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
         expect(result.summary).toEqual({
@@ -278,10 +278,64 @@ describe('useWifiQr.generatePdf', () => {
 
         await generatePdf(
             { ssid: 'MySSID', password: 'pass', authType: 'WPA', hidden: false },
-            { mode: 'single', cols: 2, rows: 5 }
+            { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
         const textCalls = mockText.mock.calls.map((c) => c[0] as string)
         expect(textCalls).toContain('MySSID')
+    })
+
+    it('generates repeatCount QR codes in grid mode', async () => {
+        const { useWifiQr } = await import('./useWifiQr')
+        const { generatePdf } = useWifiQr()
+
+        const result = await generatePdf(
+            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            { mode: 'grid', cols: 2, rows: 5, repeatCount: 6 }
+        )
+
+        expect(result.blob).toBeInstanceOf(Blob)
+        expect(result.summary.printed).toBe(6)
+        expect(mockAddImage).toHaveBeenCalledTimes(6)
+        expect(mockRect).toHaveBeenCalledTimes(6)
+    })
+
+    it('adds new pages when repeatCount exceeds perPage in grid mode', async () => {
+        const { useWifiQr } = await import('./useWifiQr')
+        const { generatePdf } = useWifiQr()
+
+        const result = await generatePdf(
+            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            { mode: 'grid', cols: 2, rows: 5, repeatCount: 12 }
+        )
+
+        expect(result.summary.printed).toBe(12)
+        expect(mockAddPage).toHaveBeenCalled()
+    })
+
+    it('repeatCount is ignored in single mode', async () => {
+        const { useWifiQr } = await import('./useWifiQr')
+        const { generatePdf } = useWifiQr()
+
+        const result = await generatePdf(
+            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            { mode: 'single', cols: 2, rows: 5, repeatCount: 10 }
+        )
+
+        expect(result.summary.printed).toBe(1)
+        expect(mockAddImage).toHaveBeenCalledTimes(1)
+    })
+
+    it('reports total as repeatCount in grid mode', async () => {
+        const { useWifiQr } = await import('./useWifiQr')
+        const { generatePdf } = useWifiQr()
+
+        const result = await generatePdf(
+            { ssid: 'TestNet', password: 'pass', authType: 'WPA', hidden: false },
+            { mode: 'grid', cols: 2, rows: 5, repeatCount: 3 }
+        )
+
+        expect(result.summary.total).toBe(3)
+        expect(result.summary.printed).toBe(3)
     })
 })

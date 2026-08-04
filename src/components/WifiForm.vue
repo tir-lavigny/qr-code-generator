@@ -50,6 +50,7 @@ const layoutMode = defineModel<WifiGridConfig['mode']>('layoutMode', {
 })
 const gridCols = defineModel<number>('gridCols', { required: true })
 const gridRows = defineModel<number>('gridRows', { required: true })
+const repeatCount = defineModel<number>('repeatCount', { required: true })
 
 const showPassword = ref(false)
 
@@ -70,6 +71,7 @@ const gridConfig = computed<WifiGridConfig>(() => ({
     mode: layoutMode.value,
     cols: gridCols.value,
     rows: gridRows.value,
+    repeatCount: repeatCount.value,
 }))
 
 const validationError = computed(() => {
@@ -228,6 +230,22 @@ async function onGenerate() {
                             v-model="gridRows"
                             :min="1"
                             :max="20"
+                            class="w-32"
+                        >
+                            <NumberFieldContent>
+                                <NumberFieldDecrement />
+                                <NumberFieldInput />
+                                <NumberFieldIncrement />
+                            </NumberFieldContent>
+                        </NumberField>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <Label>Répétitions</Label>
+                        <NumberField
+                            v-model="repeatCount"
+                            :min="1"
+                            :max="200"
                             class="w-32"
                         >
                             <NumberFieldContent>
