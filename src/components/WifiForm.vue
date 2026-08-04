@@ -75,7 +75,7 @@ const gridConfig = computed<WifiGridConfig>(() => ({
 }))
 
 const validationError = computed(() => {
-    if (!ssid.value.trim()) return 'L\'SSID est requis.'
+    if (!ssid.value.trim()) return "L'SSID est requis."
     if (needsPassword.value && !password.value)
         return 'Le mot de passe est requis pour WPA et WEP.'
     return null
@@ -159,7 +159,7 @@ async function onGenerate() {
                     />
                     <button
                         type="button"
-                        class="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
+                        class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2"
                         @click="showPassword = !showPassword"
                     >
                         <EyeOffIcon v-if="showPassword" class="size-4" />
@@ -169,10 +169,7 @@ async function onGenerate() {
             </div>
 
             <div class="flex items-start gap-3">
-                <Checkbox
-                    id="hidden-network"
-                    v-model:checked="hidden"
-                />
+                <Checkbox id="hidden-network" v-model:checked="hidden" />
                 <div class="space-y-0.5">
                     <Label for="hidden-network" class="cursor-pointer">
                         Réseau masqué
@@ -207,7 +204,10 @@ async function onGenerate() {
                     </Select>
                 </div>
 
-                <div v-if="layoutMode === 'grid'" class="flex flex-wrap items-end gap-6">
+                <div
+                    v-if="layoutMode === 'grid'"
+                    class="flex flex-wrap items-end gap-6"
+                >
                     <div class="space-y-1.5">
                         <Label>Colonnes par page</Label>
                         <NumberField

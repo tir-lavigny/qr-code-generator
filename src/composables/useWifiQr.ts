@@ -2,10 +2,7 @@ import { ref } from 'vue'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import type { WifiConfig, WifiGridConfig } from '@/types/wifi'
-import {
-    computeCardDimensions,
-    downloadPdf,
-} from '@/composables/useQrPdf'
+import { computeCardDimensions, downloadPdf } from '@/composables/useQrPdf'
 import type { GenerateSummary } from '@/composables/useQrPdf'
 
 const PAGE_WIDTH = 210
@@ -13,7 +10,11 @@ const PAGE_HEIGHT = 297
 const PAGE_MARGIN = 10
 
 function escapeWifiField(value: string): string {
-    return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/:/g, '\\:')
+    return value
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/:/g, '\\:')
 }
 
 export function generateWifiString(config: WifiConfig): string {
@@ -30,7 +31,7 @@ export function generateWifiString(config: WifiConfig): string {
 
 function validateConfig(config: WifiConfig): void {
     if (!config.ssid.trim()) {
-        throw new Error('L\'SSID est requis.')
+        throw new Error("L'SSID est requis.")
     }
     if (config.authType !== 'nopass' && !config.password) {
         throw new Error(
@@ -92,12 +93,9 @@ export function useWifiQr() {
             doc.text(authLabel, PAGE_WIDTH / 2, textY + 6, { align: 'center' })
 
             if (config.hidden) {
-                doc.text(
-                    'Réseau masqué',
-                    PAGE_WIDTH / 2,
-                    textY + 12,
-                    { align: 'center' }
-                )
+                doc.text('Réseau masqué', PAGE_WIDTH / 2, textY + 12, {
+                    align: 'center',
+                })
             }
         } else {
             const { cardWidth, cardHeight } = computeCardDimensions(grid)
@@ -140,7 +138,8 @@ export function useWifiQr() {
         isGenerating.value = false
         progress.value = 100
 
-        const printed = grid.mode === 'single' ? 1 : Math.max(1, grid.repeatCount)
+        const printed =
+            grid.mode === 'single' ? 1 : Math.max(1, grid.repeatCount)
         const summary: GenerateSummary = {
             total: printed,
             printed,

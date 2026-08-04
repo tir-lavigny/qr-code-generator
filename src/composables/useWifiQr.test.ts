@@ -211,7 +211,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'OpenNet', password: '', authType: 'nopass', hidden: false },
+            {
+                ssid: 'OpenNet',
+                password: '',
+                authType: 'nopass',
+                hidden: false,
+            },
             { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
@@ -224,7 +229,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            {
+                ssid: 'TestNet',
+                password: 'pass123',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
@@ -239,7 +249,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            {
+                ssid: 'TestNet',
+                password: 'pass123',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'grid', cols: 2, rows: 5, repeatCount: 1 }
         )
 
@@ -277,7 +292,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         await generatePdf(
-            { ssid: 'MySSID', password: 'pass', authType: 'WPA', hidden: false },
+            {
+                ssid: 'MySSID',
+                password: 'pass',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'single', cols: 2, rows: 5, repeatCount: 1 }
         )
 
@@ -290,7 +310,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            {
+                ssid: 'TestNet',
+                password: 'pass123',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'grid', cols: 2, rows: 5, repeatCount: 6 }
         )
 
@@ -305,7 +330,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            {
+                ssid: 'TestNet',
+                password: 'pass123',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'grid', cols: 2, rows: 5, repeatCount: 12 }
         )
 
@@ -318,7 +348,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'TestNet', password: 'pass123', authType: 'WPA', hidden: false },
+            {
+                ssid: 'TestNet',
+                password: 'pass123',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'single', cols: 2, rows: 5, repeatCount: 10 }
         )
 
@@ -331,7 +366,12 @@ describe('useWifiQr.generatePdf', () => {
         const { generatePdf } = useWifiQr()
 
         const result = await generatePdf(
-            { ssid: 'TestNet', password: 'pass', authType: 'WPA', hidden: false },
+            {
+                ssid: 'TestNet',
+                password: 'pass',
+                authType: 'WPA',
+                hidden: false,
+            },
             { mode: 'grid', cols: 2, rows: 5, repeatCount: 3 }
         )
 

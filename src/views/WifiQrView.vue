@@ -22,7 +22,9 @@ const formSsid = ref('')
 const formPassword = ref('')
 const formAuthType = ref<WifiConfig['authType']>('WPA')
 const formHidden = ref(false)
-const formLayoutMode = ref<WifiGridConfig['mode']>(DEFAULT_WIFI_GRID_CONFIG.mode)
+const formLayoutMode = ref<WifiGridConfig['mode']>(
+    DEFAULT_WIFI_GRID_CONFIG.mode
+)
 const formGridCols = ref(DEFAULT_WIFI_GRID_CONFIG.cols)
 const formGridRows = ref(DEFAULT_WIFI_GRID_CONFIG.rows)
 const formRepeatCount = ref(DEFAULT_WIFI_GRID_CONFIG.repeatCount)
@@ -38,12 +40,10 @@ function onGenerated(data: { blob: Blob; summary: GenerateSummary }) {
     <div class="space-y-8">
         <div class="flex items-start justify-between">
             <div class="space-y-1">
-                <h1 class="text-2xl font-bold tracking-tight">
-                    QR Code WiFi
-                </h1>
+                <h1 class="text-2xl font-bold tracking-tight">QR Code WiFi</h1>
                 <p class="text-muted-foreground text-sm">
-                    Générez un QR code pour connecter automatiquement à un réseau
-                    WiFi.
+                    Générez un QR code pour connecter automatiquement à un
+                    réseau WiFi.
                 </p>
             </div>
             <Button variant="ghost" size="sm" @click="emit('back')">
