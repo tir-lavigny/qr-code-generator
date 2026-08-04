@@ -50,8 +50,8 @@ const emit = defineEmits<{
             </button>
 
             <button
-                class="ring-border cursor-pointer rounded-xl p-0 text-left opacity-50 ring-1 transition-colors"
-                disabled
+                class="hover:bg-accent/50 ring-border cursor-pointer rounded-xl p-0 text-left ring-1 transition-colors"
+                @click="emit('select', 'wifi')"
             >
                 <Card class="border-0 shadow-none">
                     <CardHeader>
@@ -66,7 +66,7 @@ const emit = defineEmits<{
                     </CardHeader>
                     <CardContent>
                         <p class="text-muted-foreground text-xs">
-                            Bientôt disponible
+                            Connexion rapide · WPA/WEP · Réseau ouvert
                         </p>
                     </CardContent>
                 </Card>

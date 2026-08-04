@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import LandingPage from '@/views/LandingPage.vue'
 import AvsQrView from '@/views/AvsQrView.vue'
+import WifiQrView from '@/views/WifiQrView.vue'
 
 type Feature = 'avs' | 'wifi' | null
 
@@ -16,6 +17,7 @@ const feature = ref<Feature>(null)
         <div class="mx-auto max-w-5xl space-y-8">
             <LandingPage v-if="!feature" @select="feature = $event" />
             <AvsQrView v-else-if="feature === 'avs'" @back="feature = null" />
+            <WifiQrView v-else-if="feature === 'wifi'" @back="feature = null" />
         </div>
     </main>
 </template>
