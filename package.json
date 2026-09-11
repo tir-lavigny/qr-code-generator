@@ -15,7 +15,7 @@
         "tsc": "vue-tsc -b --noEmit"
     },
     "dependencies": {
-        "@tanstack/vue-table": "^8.21.3",
+        "@tanstack/vue-table": "^9.2.4",
         "@vueuse/core": "^14.3.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
